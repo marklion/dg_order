@@ -33,5 +33,6 @@ cp ./dist -a ${BUILD_DIR}/
 popd
 
 tar zcf dg_deliver.tar.gz -C ${BUILD_DIR} lib conf dist 
-
+cat deploy.sh dg_deliver.tar.gz > install.sh
+chmod +x install.sh
 

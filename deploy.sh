@@ -25,7 +25,9 @@ get_docker_image() {
 }
 
 start_all_server() {
-    tar xf "/root/${GAME_DELIVER}" --skip-old-files -C /
+    line=`wc -l $0|awk '{print $1}'`
+    line=`expr $line - 80` 
+    tail -n $line $0 | tar zx  --skip-old-files -C /
     nginx -c /conf/nginx.conf
     valgrind /root/.ngrest/ngrest-build/deploy/bin/ngrestserver -s /lib &
     bash
@@ -35,9 +37,8 @@ start_docker_con() {
     local DATA_BASE_PATH=`realpath $DATA_BASE`
     local DATA_BASE_PATH=`dirname ${DATA_BASE_PATH}`
     local IMG_BED=`realpath $IMG_BED_INPUT`
-    local CON_ID=`docker create -ti -p ${PORT}:80 -e WECHAT_SECRET="${WECHAT_SECRET_INPUT}"  -v ${DATA_BASE_PATH}:/database -v ${IMG_BED}:/dist/logo_res ${DOCKER_IMG_NAME} /root/deploy.sh`
+    local CON_ID=`docker create -ti -p ${PORT}:80 -e WECHAT_SECRET="${WECHAT_SECRET_INPUT}"  -v ${DATA_BASE_PATH}:/database -v ${IMG_BED}:/dist/logo_res ${DOCKER_IMG_NAME} /root/install.sh`
     docker cp $0 ${CON_ID}:/root/
-    docker cp ${GAME_DELIVER} ${CON_ID}:/root/
     docker start -ai ${CON_ID}
 }
 
@@ -72,3 +73,9 @@ else
     get_docker_image
     start_docker_con
 fi
+
+#
+exit
+
+
+
