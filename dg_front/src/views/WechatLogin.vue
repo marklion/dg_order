@@ -16,7 +16,7 @@ export default {
             }).then(
                 function (resp) {
                     vue_this.$cookies.set("ssid", resp.data.result);
-                    vue_this.$router.replace({name:'Home'});
+                    vue_this.$router.replace({path: vue_this.$route.query.state});
                 }
             ).catch(function (err) {
                 console.log(err);

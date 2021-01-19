@@ -120,7 +120,7 @@ export default {
             this.$router.push({path:'/dg_order/' + this.dg_order_number})
         },
         nav_to_wx_login: function () {
-            window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect"
+            window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2f#wechat_redirect"
         },
         dg_order_created: function () {
             var vue_this = this;

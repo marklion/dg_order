@@ -49,8 +49,9 @@
                 <el-input-number v-model="good_form.number" :min="1" label="货品数量"></el-input-number>
             </el-form-item>
             <el-form-item label="参考图片">
-                <el-button @click="add_img">添加图片</el-button>
-                <el-image :src="tmp_good_pic" v-if="tmp_good_pic!=''"></el-image>
+                <el-button @click="add_img" v-if="tmp_good_pic==''">添加图片</el-button>
+                <el-button @click="tmp_good_pic=''" v-else>取消图片</el-button>
+                <el-image :src="is_apple()?tmp_good_show:tmp_good_pic" v-if="tmp_good_pic!=''" style="width: 100px;height: 100px" :fit="cover"></el-image>
             </el-form-item>
         </el-form>
         <el-row :gutter="5" slot="footer">
@@ -62,12 +63,32 @@
             </el-col>
         </el-row>
     </el-dialog>
-    <el-button type="primary" @click="goods_new_diag = true">新货品</el-button>
+    <el-button type="primary" @click="show_new_good_diag">新货品</el-button>
 
     <el-card class="goods_show" v-for="good in goods_from_server" :key="good.name">
+        <el-dialog title="请指定规格和数量" :visible.sync="goods_add_diag" width="80%">
+            <el-form ref="form" :model="add_good_form">
+                <el-form-item lable="规格">
+                    <el-select v-model="add_good_form.spec" placeholder="请选择" filterable allow-create>
+                        <el-option v-for="itr_buyer in good.buyer" :key="itr_buyer.user_logo + itr_buyer.spec" :lable="itr_buyer.spec" :value="itr_buyer.spec"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item lable="数量">
+                    <el-input-number v-model="add_good_form.number" :min="1" label="货品数量"></el-input-number>
+                </el-form-item>
+            </el-form>
+            <el-button @click="add_buy(good)">确定</el-button>
+        </el-dialog>
+        <el-row :gutter="5" slot="header">
+            <el-col :span="12">{{good.name}}</el-col>
+            <el-col :span="6">{{good.total}}份</el-col>
+            <el-col :span="6">
+                <el-button type="primary" @click="show_add_good_diag">我要加购</el-button>
+            </el-col>
+        </el-row>
         <el-row :guuter="5">
             <el-col :span="8">
-                {{good.name}} 共 {{good.total}} 份
+                <el-image :fit="cover" style="height: 100px" :src="good.picture"></el-image>
             </el-col>
             <el-col :span="16">
                 <div v-for="buyer in good.buyer" :key="buyer.user_logo + buyer.spec">
@@ -97,49 +118,112 @@ export default {
                 order_owner_name: '',
                 order_owner_logo: '',
             },
-            tmp_good_pic:'',
+            tmp_good_pic: '',
+            tmp_good_show: '',
             good_form: {
                 name: '',
                 spec: '',
                 number: 1,
-                picture:''
+                picture: ''
             },
             activeNames: ['1'],
             goods_new_diag: false,
-            goods_from_server: [{
-                name: '',
-                picture: '',
-                total: 0,
-                buyer: [],
-            }],
+            goods_from_server: [],
+            is_apple: function () {
+                return window.__wxjs_is_wkwebview;
+            },
+            is_login: false,
+            goods_add_diag: false,
+            add_good_form: {
+                spec: '',
+                number: 1,
+            },
         }
     },
     methods: {
+        show_new_good_diag: function () {
+            if (this.is_login != true) {
+                window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2fdg_order%2f" + this.get_order_number() + "#wechat_redirect"
+            }
+            this.goods_new_diag = true;
+        },
+        show_add_good_diag:function() {
+            if (this.is_login != true) {
+                window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2fdg_order%2f" + this.get_order_number() + "#wechat_redirect"
+            }
+            this.goods_add_diag = true;
+        },
         get_order_number: function () {
             return this.$route.params.order_number;
         },
         go_back: function () {
             this.$router.go(-1);
         },
-        submit_new_good: function () {
-            Base64.extendString();
+        add_buy: function (_good) {
             var vue_this = this;
-            this.$axios.post(this.$remote_rest_url_header + 'dg_order/goods', {
+            Base64.extendString();
+            vue_this.$axios.post(vue_this.$remote_rest_url_header + 'dg_order/goods', {
                 good: {
-                    name: this.good_form.name.toBase64(),
-                    spec: this.good_form.spec.toBase64(),
-                    number: this.good_form.number,
-                    ssid: this.$cookies.get('ssid'),
-                    order_id: this.order_number,
-                    img: this.good_form.picture
+                    name: _good.name.toBase64(),
+                    spec: vue_this.add_good_form.spec.toBase64(),
+                    number: vue_this.add_good_form.number,
+                    ssid: vue_this.$cookies.get('ssid'),
+                    order_id: vue_this.order_number,
+                    img: _good.picture
                 }
             }).then(function (resp) {
+                vue_this.goods_add_diag = false;
                 vue_this.refresh_goods();
+                vue_this.add_good_form = {
+                    spec:'',
+                    number:1
+                };
                 console.log(resp);
             }).catch(function (err) {
                 console.log(err);
             });
-            this.goods_new_diag = false;
+        },
+        submit_good_orig: function (serverId) {
+            var vue_this = this;
+            vue_this.good_form.picture = serverId;
+            vue_this.$axios.post(vue_this.$remote_rest_url_header + 'dg_order/goods', {
+                good: {
+                    name: vue_this.good_form.name.toBase64(),
+                    spec: vue_this.good_form.spec.toBase64(),
+                    number: vue_this.good_form.number,
+                    ssid: vue_this.$cookies.get('ssid'),
+                    order_id: vue_this.order_number,
+                    img: vue_this.good_form.picture
+                }
+            }).then(function (resp) {
+                vue_this.goods_new_diag = false;
+                vue_this.refresh_goods();
+                vue_this.good_form = {
+                    name: '',
+                    spec: '',
+                    picture: '',
+                    number: 1
+                };
+                console.log(resp);
+            }).catch(function (err) {
+                console.log(err);
+            });
+        },
+        submit_new_good: function () {
+            Base64.extendString();
+            var vue_this = this;
+            if (this.tmp_good_pic != '') {
+                wx.uploadImage({
+                    localId: vue_this.tmp_good_pic,
+                    isShowProgressTips: 0,
+                    success: function (res_server) {
+                        console.log(res_server.serverId);
+                        vue_this.submit_good_orig(res_server.serverId);
+                    },
+                });
+            } else {
+                vue_this.submit_good_orig("none");
+            }
         },
         randomString: function (len) {
             len = len || 32;
@@ -158,6 +242,7 @@ export default {
                     Base64.extendString();
                     vue_this.$set(vue_this.goods_from_server, index, {
                         name: element.name.fromBase64(),
+                        picture: vue_this.$remote_url + element.picture,
                         total: element.total,
                         buyer: []
                     });
@@ -182,18 +267,32 @@ export default {
                 count: 1,
                 sizeType: ['compressed'],
                 success: function (res) {
-                    wx.uploadImage({
-                        localId: res.localIds[0],
-                        isShowProgressTips: 1,
-                        success: function (res_server) {
-                            console.log(res_server.serverId);
-                            vue_this.good_form.picture = res_server.serverId;
-                            vue_this.tmp_good_pic = res.localIds[0];
-                        },
-                    });
+                    if (vue_this.is_apple()) {
+                        wx.getLocalImgData({
+                            localId: res.localIds[0],
+                            success: function (res_get) {
+                                vue_this.tmp_good_show = res_get.localData;
+                            }
+                        });
+                    }
+                    vue_this.tmp_good_pic = res.localIds[0];
                 },
             });
         },
+        get_user_info: function () {
+            var vue_this = this;
+            var ssid = this.$cookies.get('ssid');
+            console.log(this.$remote_rest_url_header);
+            this.$axios.get(this.$remote_rest_url_header + 'user_info/' + ssid).then(function (resp) {
+                if (resp.data.result.online == true) {
+                    vue_this.is_login = true;
+                }
+                console.log(vue_this);
+            }).catch(function (err) {
+                console.log(err);
+            });
+        },
+
     },
     beforeMount: function () {
         this.order_number = this.get_order_number();
@@ -211,6 +310,7 @@ export default {
             console.log(err);
         });
         this.refresh_goods();
+        this.get_user_info();
     },
     mounted: function () {
         var timestamp = (new Date()).getTime();
@@ -222,30 +322,32 @@ export default {
             url: window.location.href,
         }).then(function (resp) {
             wx.config({
-                debug: true,
+                debug: false,
                 appId: 'wxa390f8b6f68e9c6d',
                 timestamp: timestamp,
                 nonceStr: nonceStr,
                 signature: resp.data.result,
-                jsApiList: ['updateAppMessageShareData', 'chooseImage', 'uploadImage']
+                jsApiList: ['updateAppMessageShareData', 'chooseImage', 'uploadImage', 'getLocalImgData']
             });
+            wx.ready(function () {
+                console.log('success to config wx');
+                wx.updateAppMessageShareData({
+                    title: vue_this.order_brief.order_owner_name + '的代购清单',
+                    desc: '点击链接参与代购',
+                    link: window.location.href,
+                    imgUrl: vue_this.order_brief.order_owner_logo,
+                    success: function () {
+                        console.log('success to set share btn');
+                    }
+                });
+            });
+
+            wx.error(function (err) {
+                console.log('fail to config wx');
+                console.log(err);
+            });
+
         }).catch(function (err) {
-            console.log(err);
-        });
-        wx.ready(function () {
-            console.log('success to config wx');
-            wx.updateAppMessageShareData({
-                title: vue_this.order_brief.order_owner_name + '的代购清单',
-                desc: '点击链接参与代购',
-                link: window.location.href,
-                imgUrl: vue_this.order_brief.order_owner_logo,
-                success: function () {
-                    console.log('success to set share btn');
-                }
-            });
-        });
-        wx.error(function (err) {
-            console.log('fail to config wx');
             console.log(err);
         });
     },

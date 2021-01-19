@@ -84,7 +84,8 @@ static std::string dg_store_good_picture(const std::string &_pic, const std::str
 {
     std::string ret;
     std::string file_name("/dist/logo_res/good_pic_");
-    file_name.append(_name);
+
+    file_name.append(std::to_string(_user_id));
     file_name.append(std::to_string(time(NULL)));
     file_name.append(".jpg");
     
@@ -123,7 +124,7 @@ static std::string dg_gen_ssid()
 }
 static std::unique_ptr<dg_db_user_info> fetch_user_info(const std::string &_name, const std::string &_logo, const std::string &_openid)
 {
-    auto p_user_info = sqlite_orm::search_record<dg_db_user_info>(DG_DB_FILE, "openid = '%s'", _openid);
+    auto p_user_info = sqlite_orm::search_record<dg_db_user_info>(DG_DB_FILE, "openid = '%s'", _openid.c_str());
     if (nullptr == p_user_info)
     {
         p_user_info.reset(new dg_db_user_info(DG_DB_FILE));
@@ -350,7 +351,14 @@ std::string dg_insert_goods(const std::string &_good_name, const std::string &_s
 
     dg_db_goods good(DG_DB_FILE);
     good.m_name = _good_name;
-    good.m_picture = dg_store_good_picture(downlaod_img, _good_name, _user_id);
+    if (downlaod_img.size() <= 0)
+    {
+        good.m_picture = "none";
+    }
+    else
+    {
+        good.m_picture = dg_store_good_picture(downlaod_img, _good_name, _user_id);
+    }
     good.m_order_id = _order_id;
     good.m_user_id = _user_id;
     good.m_spec = _spec;
