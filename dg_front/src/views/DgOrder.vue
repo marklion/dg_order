@@ -430,5 +430,7 @@ export default {
     position: fixed;
     bottom: 60px;
     left: 10%;
+    z-index: 99;
+    opacity: 0.8;
 }
 </style>
