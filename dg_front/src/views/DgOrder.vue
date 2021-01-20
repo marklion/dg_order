@@ -1,41 +1,51 @@
 <template>
 <div class="dg_order">
-    <el-breadcrumb separator-class="el-icon-arrow-right" class="bread-crum">
-        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>{{order_brief.destination +  '代购 购物批号:' + order_number}}</el-breadcrumb-item>
-    </el-breadcrumb>
-    <el-row :gutter="5" type="flex" align="middle">
+    <div class="order_header">
+        <el-row :gutter="5" type="flex" align="middle">
+            <el-col :span="6">
+                <el-button type="text" @click="go_back" style="height: 30px; padding: 0px 0px;">我也做代购</el-button>
+            </el-col>
+            <el-col :span="18" class="order_brief_show">
+                <el-row :gutter="5" type="flex" align="middle">
+                    <el-col :span="3">
+                        <el-avatar :src="order_brief.order_owner_logo" fit="cover" :size="30">
+                        </el-avatar>
+                    </el-col>
+                    <el-col :span="21">
+                        {{order_brief.order_owner_name + '      '}}{{order_brief.destination +  '代购预定单'}}
+                    </el-col>
+                </el-row>
+            </el-col>
+        </el-row>
+    </div>
+    <el-row :gutter="5" type="flex" align="middle" class="order_date_detail">
         <el-col :span="12">
-            托付人：{{order_brief.order_owner_name}}
+            <el-row :gutter="5" type="flex" align="middle">
+                <el-col :span="10">
+                    出发时间
+                </el-col>
+                <el-col :span="14">
+                    {{order_brief.start_time}}
+                </el-col>
+            </el-row>
+            <el-row :gutter="5" type="flex" align="middle">
+                <el-col :span="10">
+                    预计发货
+                </el-col>
+                <el-col :span="14">
+                    {{order_brief.deliver_time}}
+                </el-col>
+            </el-row>
         </el-col>
         <el-col :span="12">
-            <el-avatar :src="order_brief.order_owner_logo" fit="cover" :size="60">
-                <img src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" />
-            </el-avatar>
+            <el-button type="text" @click="comments_show = true">查看备注</el-button>
         </el-col>
     </el-row>
-    <el-row :gutter="5" type="flex" align="middle">
-        <el-col :span="8">
-            出发时间
-        </el-col>
-        <el-col :span="16">
-            <el-date-picker v-model="order_brief.start_time" :readonly="true" type="date" format="yyyy 年 MM 月 dd 日" value-format="yyyy-MM-dd"></el-date-picker>
-        </el-col>
-    </el-row>
-    <el-row :gutter="5" type="flex" align="middle">
-        <el-col :span="8">
-            预计发货时间
-        </el-col>
-        <el-col :span="16">
-            <el-date-picker v-model="order_brief.deliver_time" :readonly="true" type="date" format="yyyy 年 MM 月 dd 日" value-format="yyyy-MM-dd"></el-date-picker>
-        </el-col>
-    </el-row>
-    <el-collapse v-model="activeNames">
-        <el-collapse-item title="备注" name="1">
-            <el-input type="textarea" autosize placeholder="请输入内容" v-model="order_brief.comments" :disable="true" :readonly="true">
-            </el-input>
-        </el-collapse-item>
-    </el-collapse>
+
+    <el-drawer title="备注" :visible.sync="comments_show" direction="btt">
+        <el-input type="textarea" autosize placeholder="请输入内容" v-model="order_brief.comments" :disable="true" :readonly="true">
+        </el-input>
+    </el-drawer>
 
     <el-dialog title="请输入货品细节" :visible.sync="goods_new_diag" width="80%">
         <el-form ref="form" :model="good_form">
@@ -63,37 +73,53 @@
             </el-col>
         </el-row>
     </el-dialog>
-    <el-button type="primary" @click="show_new_good_diag">新货品</el-button>
+    <el-row :gutter="10" type="flex" align="middle" class="opt_zone">
+        <el-col :span="12">
+            <el-button type="primary" round @click="show_new_good_diag" class="el-icon-circle-plus-outline">添加心愿</el-button>
+        </el-col>
+        <el-col :span="12">
+            <el-button type="primary" round @click="show_new_good_diag">我参与的</el-button>
+        </el-col>
+    </el-row>
 
-    <el-card class="goods_show" v-for="good in goods_from_server" :key="good.name">
-        <el-dialog title="请指定规格和数量" :visible.sync="goods_add_diag" width="80%">
-            <el-form ref="form" :model="add_good_form">
-                <el-form-item lable="规格">
-                    <el-select v-model="add_good_form.spec" placeholder="请选择" filterable allow-create>
-                        <el-option v-for="itr_buyer in good.buyer" :key="itr_buyer.user_logo + itr_buyer.spec" :lable="itr_buyer.spec" :value="itr_buyer.spec"></el-option>
-                    </el-select>
-                </el-form-item>
-                <el-form-item lable="数量">
-                    <el-input-number v-model="add_good_form.number" :min="1" label="货品数量"></el-input-number>
-                </el-form-item>
-            </el-form>
-            <el-button @click="add_buy(good)">确定</el-button>
-        </el-dialog>
-        <el-row :gutter="5" slot="header">
+    <el-dialog title="请指定规格和数量" :visible.sync="goods_add_diag" width="80%">
+        <el-form ref="form" :model="add_good_form">
+            <el-form-item lable="规格">
+                <el-select v-model="add_good_form.spec" placeholder="请选择" filterable allow-create>
+                    <el-option v-for="itr_buyer in good_add_focus.buyer" :key="itr_buyer.user_logo + itr_buyer.spec" :lable="itr_buyer.spec" :value="itr_buyer.spec"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item lable="数量">
+                <el-input-number v-model="add_good_form.number" :min="1" label="货品数量"></el-input-number>
+            </el-form-item>
+        </el-form>
+        <el-button @click="add_buy(good_add_focus)">确定</el-button>
+    </el-dialog>
+
+    <el-card class="goods_show" v-for="good in goods_from_server" :key="good.name" :body-style="{padding: '0px 0px'}">
+        <el-row :gutter="5" type="flex" align="middle" class="good_show_header">
             <el-col :span="12">{{good.name}}</el-col>
             <el-col :span="6">{{good.total}}份</el-col>
             <el-col :span="6">
-                <el-button type="primary" @click="show_add_good_diag">我要加购</el-button>
+                <el-button type="primary" @click="show_add_good_diag(good)">我要同款</el-button>
             </el-col>
         </el-row>
         <el-row :guuter="5">
             <el-col :span="8">
-                <el-image :fit="cover" style="height: 100px" :src="good.picture"></el-image>
+                <el-image fit="cover" style="height: 100px" :src="good.picture"></el-image>
             </el-col>
             <el-col :span="16">
-                <div v-for="buyer in good.buyer" :key="buyer.user_logo + buyer.spec">
-                    {{buyer.user_name}} 要买 {{buyer.number}} 份 {{buyer.spec}}
-                </div>
+                <el-table :data="good.buyer" stripe style="width: 100%" max-height="100" :show-header="false" :row-style="buyer_style" :cell-style="{padding: '2px 0px', color: 'red'}">
+                    <el-table-column label="头像" width="30">
+                        <template slot-scope="scope">
+                            <el-avatar :src="scope.row.user_logo" fit="cover" :size="20">
+                            </el-avatar>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="用户" prop="user_name" width="100"></el-table-column>
+                    <el-table-column label="规格" prop="spec" width="80"></el-table-column>
+                    <el-table-column label="数量" prop="number"></el-table-column>
+                </el-table>
             </el-col>
         </el-row>
     </el-card>
@@ -126,7 +152,6 @@ export default {
                 number: 1,
                 picture: ''
             },
-            activeNames: ['1'],
             goods_new_diag: false,
             goods_from_server: [],
             is_apple: function () {
@@ -134,10 +159,15 @@ export default {
             },
             is_login: false,
             goods_add_diag: false,
+            good_add_focus: {},
             add_good_form: {
                 spec: '',
                 number: 1,
             },
+            buyer_style: {
+                height: '10px',
+            },
+            comments_show: true,
         }
     },
     methods: {
@@ -147,17 +177,20 @@ export default {
             }
             this.goods_new_diag = true;
         },
-        show_add_good_diag:function() {
+        show_add_good_diag: function (_good) {
             if (this.is_login != true) {
                 window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2fdg_order%2f" + this.get_order_number() + "#wechat_redirect"
             }
+            this.good_add_focus = _good;
             this.goods_add_diag = true;
         },
         get_order_number: function () {
             return this.$route.params.order_number;
         },
         go_back: function () {
-            this.$router.go(-1);
+            this.$router.push({
+                path: '/'
+            })
         },
         add_buy: function (_good) {
             var vue_this = this;
@@ -175,9 +208,10 @@ export default {
                 vue_this.goods_add_diag = false;
                 vue_this.refresh_goods();
                 vue_this.add_good_form = {
-                    spec:'',
-                    number:1
+                    spec: '',
+                    number: 1
                 };
+                vue_this.good_add_focus = {};
                 console.log(resp);
             }).catch(function (err) {
                 console.log(err);
@@ -249,7 +283,7 @@ export default {
                     element.buyer.forEach((buyer, b_index) => {
                         vue_this.$set(vue_this.goods_from_server[index].buyer, b_index, {
                             user_name: buyer.user_name.fromBase64(),
-                            user_logo: buyer.user_logo,
+                            user_logo: vue_this.$remote_url + buyer.user_logo,
                             spec: buyer.spec.fromBase64(),
                             number: buyer.number
                         });
@@ -359,11 +393,42 @@ export default {
     font-size: 18px;
 }
 
+.dg_order {
+    background-color: rgb(253, 246, 236);
+}
+
 .el-button {
     display: block;
     width: 100%;
     padding-left: 4px;
     padding-right: 4px;
     margin-left: 0px;
+}
+
+.goods_show {
+    margin-bottom: 5px;
+    background-color: rgb(197, 207, 207);
+}
+
+.good_show_header {
+    background-color: rgb(226, 224, 117);
+    padding: 0px 0px;
+}
+
+.order_brief_show {
+    background-color: rgb(105, 162, 209);
+}
+
+.order_date_detail {
+    font-size: 12px;
+    color: rgb(182, 29, 29);
+    background-color: rgb(216, 191, 213);
+}
+
+.opt_zone {
+    width: 80%;
+    position: fixed;
+    bottom: 60px;
+    left: 10%;
 }
 </style>
