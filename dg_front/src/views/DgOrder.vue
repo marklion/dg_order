@@ -78,7 +78,7 @@
             <el-button type="primary" round @click="show_new_good_diag" class="el-icon-circle-plus-outline">添加心愿</el-button>
         </el-col>
         <el-col :span="12">
-            <el-button type="primary" round @click="show_new_good_diag">我参与的</el-button>
+            <el-button type="primary" round @click="nav_to_my_order">我参与的</el-button>
         </el-col>
     </el-row>
 
@@ -96,30 +96,46 @@
         <el-button @click="add_buy(good_add_focus)">确定</el-button>
     </el-dialog>
 
-    <el-card class="goods_show" v-for="good in goods_from_server" :key="good.name" :body-style="{padding: '0px 0px'}">
-        <el-row :gutter="5" type="flex" align="middle" class="good_show_header">
-            <el-col :span="12">{{good.name}}</el-col>
-            <el-col :span="6">{{good.total}}份</el-col>
-            <el-col :span="6">
-                <el-button type="primary" @click="show_add_good_diag(good)">我要同款</el-button>
-            </el-col>
-        </el-row>
-        <el-row :guuter="5">
+    <el-card class="goods_show" v-for="good in goods_from_server" :key="good.name" :body-style="{padding: '3px 3px'}">
+        <el-row :gutter="5" type="flex">
             <el-col :span="8">
                 <el-image fit="cover" style="height: 100px" :src="good.picture"></el-image>
             </el-col>
             <el-col :span="16">
-                <el-table :data="good.buyer" stripe style="width: 100%" max-height="100" :show-header="false" :row-style="buyer_style" :cell-style="{padding: '2px 0px', color: 'red'}">
-                    <el-table-column label="头像" width="30">
-                        <template slot-scope="scope">
-                            <el-avatar :src="scope.row.user_logo" fit="cover" :size="20">
-                            </el-avatar>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="用户" prop="user_name" width="100"></el-table-column>
-                    <el-table-column label="规格" prop="spec" width="80"></el-table-column>
-                    <el-table-column label="数量" prop="number"></el-table-column>
-                </el-table>
+                <el-row :gutter="5" type="flex" align="middle">
+                    <el-col :span="16" style="font-weight: bold">{{good.name}}</el-col>
+                    <el-col :span="8">
+                        <div class="good_count_show">
+                            已预定 x{{good.total}}
+                        </div>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="5" type="flex" align="middle">
+                    <el-col :span="14">
+                        <div class="good_brief_show" v-text="has_ordered(good)"></div>
+                    </el-col>
+                    <el-col :span="10">
+                        <el-button type="success" @click="show_add_good_diag(good)" class="add_same_show">我要同款</el-button>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="5">
+                    <el-col :span="14">
+                        <el-popover placement="bottom" title="已订列表" width="80%" trigger="click">
+                            <el-table :data="good.buyer" stripe style="width: 100%" max-height="100" :show-header="false" :row-style="buyer_style" :cell-style="{padding: '2px 0px', color: 'red'}">
+                                <el-table-column label="头像" width="30">
+                                    <template slot-scope="scope">
+                                        <el-avatar :src="scope.row.user_logo" fit="cover" :size="20">
+                                        </el-avatar>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="用户" prop="user_name" width="100"></el-table-column>
+                                <el-table-column label="规格" prop="spec" width="80"></el-table-column>
+                                <el-table-column label="数量" prop="number"></el-table-column>
+                            </el-table>
+                            <el-button slot="reference" type="text" class="expend_detail">展开详情</el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
             </el-col>
         </el-row>
     </el-card>
@@ -168,6 +184,26 @@ export default {
                 height: '10px',
             },
             comments_show: true,
+            has_ordered: function (_good) {
+                var ret = "";
+                var buyer = _good.buyer;
+                var buyer_name = [];
+                buyer.forEach(element => {
+                    if (!buyer_name.includes(element.user_name)) {
+                        buyer_name.push(element.user_name);
+                    }
+                });
+                buyer_name.forEach((element, index) => {
+                    if (index >= 3) {
+                        return;
+                    }
+                    ret += element + ","
+                });
+                ret = ret.substring(0, ret.length - 1);
+                ret += "等用户参与了订购";
+
+                return ret;
+            }
         }
     },
     methods: {
@@ -326,7 +362,9 @@ export default {
                 console.log(err);
             });
         },
-
+        nav_to_my_order: function () {
+            this.$router.push({path:'/my_order'});
+        },
     },
     beforeMount: function () {
         this.order_number = this.get_order_number();
@@ -407,7 +445,6 @@ export default {
 
 .goods_show {
     margin-bottom: 5px;
-    background-color: rgb(197, 207, 207);
 }
 
 .good_show_header {
@@ -433,4 +470,30 @@ export default {
     z-index: 99;
     opacity: 0.8;
 }
+
+.good_count_show {
+    border-radius: 0px;
+    border: 1px solid rgb(112, 112, 112);
+    text-align: center;
+    color: rgb(88, 88, 88);
+    font-size: 11px;
+}
+
+.expend_detail {
+    text-align: left;
+    color: rgb(59, 56, 56);
+    text-decoration: underline;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    background-color: rgb(240, 240, 240);
+}
+
+.good_brief_show {
+    height: 50px;
+    background-color: rgb(240, 240, 240);
+    color: rgb(59, 56, 56);
+    font-size: 13px;
+}
+
+.add_same_show {}
 </style>

@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import WechatLogin from '../views/WechatLogin.vue'
 import DgOrder from '../views/DgOrder.vue'
+import MyOrder from '../views/MyOrder.vue'
 
 Vue.use(VueRouter)
 
@@ -21,6 +22,11 @@ const routes = [
     path:'/dg_order/:order_number',
     name: 'DgOrder',
     component: DgOrder
+  },
+  {
+    path: '/my_order',
+    name: 'MyOrder',
+    component: MyOrder
   }
 ]
 
