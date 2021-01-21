@@ -62,6 +62,14 @@ struct dg_good_insert
     int number;
 };
 
+struct dg_self_good 
+{
+    std::string name;
+    std::string picture;
+    std::string spec;
+    int number;
+};
+
 //! Dummy description for the service
 /*! Some detailed description of the service */
 // '*location' comment sets resource path for this service
@@ -109,6 +117,15 @@ public:
     // *location: /dg_wx_sign
     // *method: POST
     std::string proc_wx_sign(const std::string& nonceStr, long timestamp, const std::string& url);
+
+
+    // *location: /my_order/
+    // *method: POST
+    std::vector<dg_self_good> proc_my_order_get(const std::string& order_id, const std::string& ssid);
+
+    // *location: /join_id/{ssid}
+    // *method: GET
+    std::vector<std::string> proc_my_orders(const std::string ssid);
 };
 
 

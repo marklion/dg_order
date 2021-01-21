@@ -61,7 +61,7 @@
             <el-form-item label="参考图片">
                 <el-button @click="add_img" v-if="tmp_good_pic==''">添加图片</el-button>
                 <el-button @click="tmp_good_pic=''" v-else>取消图片</el-button>
-                <el-image :src="is_apple()?tmp_good_show:tmp_good_pic" v-if="tmp_good_pic!=''" style="width: 100px;height: 100px" :fit="cover"></el-image>
+                <el-image :src="is_apple()?tmp_good_show:tmp_good_pic" v-if="tmp_good_pic!=''" style="width: 100px;height: 100px" fit="cover"></el-image>
             </el-form-item>
         </el-form>
         <el-row :gutter="5" slot="footer">

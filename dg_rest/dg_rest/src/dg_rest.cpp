@@ -147,3 +147,52 @@ std::string dg_rest::proc_wx_sign(const std::string& nonceStr, long timestamp, c
 {
     return dg_wx_sign(nonceStr, timestamp, url);
 }
+
+std::vector<dg_self_good> dg_rest::proc_my_order_get(const std::string& order_id, const std::string& ssid)
+{
+    std::vector<dg_self_good> ret;
+    auto opt_user = get_online_user_info(ssid);
+    if (opt_user)
+    {
+        std::map<std::string, dg_self_good *> tmp_ret;
+        dg_get_self_good_by_order_id(order_id, opt_user->get_pri_id(), [&](const dg_db_goods &_good) -> bool {
+            auto charect = _good.m_name + _good.m_spec;
+            auto p_exist = tmp_ret[charect];
+            if (nullptr == p_exist)
+            {
+                tmp_ret[charect] = new dg_self_good();
+                p_exist = tmp_ret[charect];
+                Base64::Encode(_good.m_name, &(p_exist->name));
+                Base64::Encode(_good.m_spec, &(p_exist->spec));
+                p_exist->picture = _good.m_picture;
+                p_exist->number = 0;
+            }
+            p_exist->number++;
+
+            return true;
+        });
+        for (auto itr = tmp_ret.begin(); itr != tmp_ret.end(); itr++)
+        {
+            ret.push_back(*(itr->second));
+            delete itr->second;
+        }
+    }
+
+    return ret;
+}
+
+std::vector<std::string> dg_rest::proc_my_orders(const std::string ssid)
+{
+    std::vector<std::string> ret;
+    auto opt_user = get_online_user_info(ssid);
+
+    if (opt_user)
+    {
+        dg_get_joined_id(opt_user->get_pri_id(), [&](const dg_db_goods &_good)->bool {
+            ret.push_back(std::to_string(_good.m_order_id));
+            return true;
+        });
+    }
+
+    return ret;
+}

@@ -19,5 +19,8 @@ void dg_get_buyer_by_name(const std::string &_order_id, const std::string& _name
 int dg_get_count_by_buyer_spec(const std::string &_order_id, const std::string& _name, int _user_id, const std::string &_spec);
 std::string dg_insert_goods(const std::string &_good_name, const std::string &_spec, const std::string &_picture, int _oder_id, int _user_id);
 
+void dg_get_self_good_by_order_id(const std::string &_order_id, int _user_id, std::function<bool ( const dg_db_goods &)> const &f);
+void dg_get_joined_id(int _user_id, std::function<bool ( const dg_db_goods &)> const &f);
+
 const std::string dg_wx_sign(const std::string& nonceStr, long timestamp, const std::string &url);
 #endif // _DG_DATA_OPT_H

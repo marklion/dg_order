@@ -398,3 +398,27 @@ const std::string dg_wx_sign(const std::string& nonceStr, long timestamp, const 
     
     return ret;
 }
+
+void dg_get_self_good_by_order_id(const std::string &_order_id, int _user_id, std::function<bool ( const dg_db_goods &)> const &f)
+{
+    auto self_goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %s AND user_id = %d", _order_id.c_str(), _user_id);
+    for (auto &itr:self_goods)
+    {
+        if (false == f(itr))
+        {
+            break;
+        }
+    }
+}
+
+void dg_get_joined_id(int _user_id, std::function<bool ( const dg_db_goods &)> const &f)
+{
+    auto orders = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "user_id = %d GROUP BY order_id", _user_id);
+    for (auto &itr:orders)
+    {
+        if (false == f(itr))
+        {
+            break;
+        }
+    }
+}

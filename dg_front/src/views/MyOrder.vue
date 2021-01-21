@@ -2,7 +2,7 @@
 <div class="my_order_show" v-if="is_login">
     <el-row class="user_info_show" :gutter="5" type="flex" align="middle">
         <el-col :span="6">
-            <el-avatar :src="self_info.user_logo" :fit="cover" :size="60">
+            <el-avatar :src="self_info.user_logo" fit="cover" :size="60">
                 <img src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" />
             </el-avatar>
         </el-col>
@@ -10,7 +10,7 @@
             <div>{{self_info.user_name}}</div>
         </el-col>
     </el-row>
-    <self-order-show :belong_order_id="2"></self-order-show>
+    <self-order-show v-for="order_id in order_ids" :key="order_id" :belong_order_id="order_id"></self-order-show>
 </div>
 </template>
 
@@ -27,7 +27,8 @@ export default {
             self_info: {
                 user_name: '',
                 user_logo: ''
-            }
+            },
+            order_ids:[]
         };
     },
     components: {
@@ -55,7 +56,15 @@ export default {
         },
     },
     beforeMount: function () {
+        var vue_this = this;
         this.get_user_info();
+        this.$axios.get(this.$remote_rest_url_header + "join_id/" + this.$cookies.get('ssid')).then(function (resp) {
+            resp.data.result.forEach((element, index) => {
+                vue_this.$set(vue_this.order_ids, index, element);
+            });
+        }).catch(function (err) {
+            console.log(err);
+        });
     },
 }
 </script>
