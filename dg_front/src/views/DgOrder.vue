@@ -360,6 +360,7 @@ export default {
                 console.log(vue_this);
             }).catch(function (err) {
                 console.log(err);
+                window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2fdg_order%2f" + vue_this.get_order_number() + "#wechat_redirect"
             });
         },
         nav_to_my_order: function () {

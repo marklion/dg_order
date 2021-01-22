@@ -40,10 +40,6 @@
                 </el-col>
             </el-row>
         </el-main>
-        <el-footer class="footer">
-            <el-button type="success" v-if="is_login">退出登陆</el-button>
-            <el-button type="success" v-else @click="nav_to_wx_login">微信登陆</el-button>
-        </el-footer>
     </el-container>
     <el-dialog title="请填写代购配置" :visible.sync="dialog_show" :modal-append-to-body="false" width="80%">
         <el-form ref="form" :model="dg_form">
@@ -114,6 +110,7 @@ export default {
                 console.log(vue_this);
             }).catch(function (err) {
                 console.log(err);
+                window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2f#wechat_redirect"
             });
         },
         query_order: function () {

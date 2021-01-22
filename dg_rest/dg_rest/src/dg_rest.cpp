@@ -93,11 +93,16 @@ std::vector<dg_goods_show> dg_rest::proc_dg_get_goods(const std::string& order_i
     std::vector<dg_goods_show> ret;
 
     dg_get_goods_name_by_order_id(order_id, [&](const dg_db_goods & _good)->bool {
+        auto good_info = dg_get_good_info(_good.m_good_id);
+        if (good_info == nullptr)
+        {
+            return false;
+        }
         dg_goods_show tmp;
-        Base64::Encode(_good.m_name, &(tmp.name));
-        tmp.picture = _good.m_picture;
+        Base64::Encode(good_info->m_name, &(tmp.name));
+        tmp.picture = good_info->m_picture;
         tmp.total = 0;
-        dg_get_buyer_by_name(order_id, _good.m_name, [&](const dg_db_goods & _buyer_good)->bool {
+        dg_get_buyer_by_name(order_id, _good.m_good_id, [&](const dg_db_goods & _buyer_good)->bool {
             dg_goods_buyer_info tmp_buyer;
             auto p_buyer_user = get_user_info(_buyer_good.m_user_id);
             if (p_buyer_user)
@@ -105,7 +110,7 @@ std::vector<dg_goods_show> dg_rest::proc_dg_get_goods(const std::string& order_i
                 Base64::Encode(p_buyer_user->m_name, &(tmp_buyer.user_name));
                 tmp_buyer.user_logo = p_buyer_user->m_logo;
                 Base64::Encode(_buyer_good.m_spec, &(tmp_buyer.spec));
-                tmp_buyer.number = dg_get_count_by_buyer_spec(order_id, _good.m_name, _buyer_good.m_user_id, _buyer_good.m_spec);
+                tmp_buyer.number = dg_get_count_by_buyer_spec(order_id, _good.m_good_id, _buyer_good.m_user_id, _buyer_good.m_spec);
                 tmp.total += tmp_buyer.number;
                 tmp.buyer.push_back(tmp_buyer);
             }
@@ -156,15 +161,20 @@ std::vector<dg_self_good> dg_rest::proc_my_order_get(const std::string& order_id
     {
         std::map<std::string, dg_self_good *> tmp_ret;
         dg_get_self_good_by_order_id(order_id, opt_user->get_pri_id(), [&](const dg_db_goods &_good) -> bool {
-            auto charect = _good.m_name + _good.m_spec;
+            auto good_info = dg_get_good_info(_good.m_good_id);
+            if (good_info == nullptr)
+            {
+                return false;
+            }
+            auto charect = good_info->m_name + _good.m_spec;
             auto p_exist = tmp_ret[charect];
             if (nullptr == p_exist)
             {
                 tmp_ret[charect] = new dg_self_good();
                 p_exist = tmp_ret[charect];
-                Base64::Encode(_good.m_name, &(p_exist->name));
+                Base64::Encode(good_info->m_name, &(p_exist->name));
                 Base64::Encode(_good.m_spec, &(p_exist->spec));
-                p_exist->picture = _good.m_picture;
+                p_exist->picture = good_info->m_picture;
                 p_exist->number = 0;
             }
             p_exist->number++;

@@ -28,7 +28,7 @@ export default {
                 user_name: '',
                 user_logo: ''
             },
-            order_ids:[]
+            order_ids: []
         };
     },
     components: {
@@ -52,6 +52,7 @@ export default {
                 console.log(vue_this);
             }).catch(function (err) {
                 console.log(err);
+                window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2fmy_order#wechat_redirect"
             });
         },
     },

@@ -6,6 +6,7 @@
 #include <uuid/uuid.h>
 #include <openssl/sha.h>
 #include <openssl/crypto.h>
+#include "Base64.h"
 
 static tdf_log g_log("dg_data_opt");
 
@@ -80,12 +81,14 @@ static std::string dg_store_logo_to_file(const std::string &_logo, const std::st
     return ret;
 }
 
-static std::string dg_store_good_picture(const std::string &_pic, const std::string &_name, int _user_id)
+static std::string dg_store_good_picture(const std::string &_pic, const std::string &_name)
 {
     std::string ret;
     std::string file_name("/dist/logo_res/good_pic_");
 
-    file_name.append(std::to_string(_user_id));
+    std::string base_name;
+    Base64::Encode(_name, &base_name);
+    file_name.append(base_name);
     file_name.append(std::to_string(time(NULL)));
     file_name.append(".jpg");
     
@@ -243,7 +246,7 @@ std::unique_ptr<dg_db_order_owner> dg_get_order(const std::string& _order_id)
 
 void dg_get_goods_name_by_order_id(const std::string& _order_id, std::function<bool ( const dg_db_goods &)> const &f)
 {
-    auto p_goods_by_name = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = '%s' group by name", _order_id.c_str());
+    auto p_goods_by_name = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = '%s' group by good_id", _order_id.c_str());
     for (auto &itr: p_goods_by_name)
     {
         if (false == f(itr))
@@ -252,9 +255,9 @@ void dg_get_goods_name_by_order_id(const std::string& _order_id, std::function<b
         }
     }
 }
-void dg_get_buyer_by_name(const std::string &_order_id, const std::string& _name, std::function<bool ( const dg_db_goods &)> const &f)
+void dg_get_buyer_by_name(const std::string &_order_id, int _good_id, std::function<bool ( const dg_db_goods &)> const &f)
 {
-    auto p_goods_buyers = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = '%s' AND name = '%s' GROUP BY user_id,spec", _order_id.c_str(), _name.c_str());
+    auto p_goods_buyers = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = '%s' AND good_id = %d GROUP BY user_id,spec", _order_id.c_str(), _good_id);
     for (auto &itr:p_goods_buyers)
     {
         if  (false == f(itr))
@@ -264,10 +267,10 @@ void dg_get_buyer_by_name(const std::string &_order_id, const std::string& _name
     }
 }
 
-int dg_get_count_by_buyer_spec(const std::string &_order_id, const std::string& _name, int _user_id, const std::string &_spec)
+int dg_get_count_by_buyer_spec(const std::string &_order_id, int _good_id, int _user_id, const std::string &_spec)
 {
-    auto p_result = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = '%s' AND name = '%s' AND user_id = %d AND spec = '%s'",
-                                                               _order_id.c_str(), _name.c_str(), _user_id, _spec.c_str());
+    auto p_result = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = '%s' AND good_id = %d AND user_id = %d AND spec = '%s'",
+                                                               _order_id.c_str(), _good_id, _user_id, _spec.c_str());
 
     return p_result.size();
 }
@@ -343,22 +346,53 @@ struct jsapi_ticket_from_wx:content_from_wx {
     }
 } g_jsapi_ticket;
 
+static int dg_fetch_good_info(const std::string &_name, const std::string &_picture)
+{
+    int ret = -1;
+
+    auto good_info = sqlite_orm::search_record<dg_db_good_info>(DG_DB_FILE, "name = '%s'", _name.c_str());
+    if (good_info)
+    {
+        if (good_info->m_picture.length() <= 0)
+        {
+            if (_picture != "none")
+            {
+                auto downlaod_img = dg_rest_req("https://api.weixin.qq.com/cgi-bin/media/get?access_token=" 
+                    + g_acc_tok.get_content() + "&media_id=" + _picture);
+                good_info->m_picture = dg_store_good_picture(downlaod_img, _name);
+                good_info->update_record();
+            }
+        }
+        ret = good_info->get_pri_id();
+    }
+    else
+    {
+        dg_db_good_info new_good(DG_DB_FILE);
+        new_good.m_name = _name;
+        if (_picture != "none")
+        {
+            auto downlaod_img = dg_rest_req("https://api.weixin.qq.com/cgi-bin/media/get?access_token=" + g_acc_tok.get_content() + "&media_id=" + _picture);
+            new_good.m_picture = dg_store_good_picture(downlaod_img, _name);
+        }
+        new_good.insert_record();
+        ret = new_good.get_pri_id();
+    }
+
+    return ret;
+}
+
+std::unique_ptr<dg_db_good_info> dg_get_good_info(int _good_id)
+{
+    return sqlite_orm::search_record<dg_db_good_info>(DG_DB_FILE, _good_id);
+}
+
 std::string dg_insert_goods(const std::string &_good_name, const std::string &_spec, const std::string &_picture, int _order_id, int _user_id)
 {
     std::string ret;
 
-    auto downlaod_img = dg_rest_req("https://api.weixin.qq.com/cgi-bin/media/get?access_token=" + g_acc_tok.get_content() + "&media_id=" + _picture);
-
     dg_db_goods good(DG_DB_FILE);
-    good.m_name = _good_name;
-    if (downlaod_img.size() <= 0)
-    {
-        good.m_picture = "none";
-    }
-    else
-    {
-        good.m_picture = dg_store_good_picture(downlaod_img, _good_name, _user_id);
-    }
+
+    good.m_good_id = dg_fetch_good_info(_good_name, _picture);
     good.m_order_id = _order_id;
     good.m_user_id = _user_id;
     good.m_spec = _spec;

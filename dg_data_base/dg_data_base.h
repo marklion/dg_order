@@ -75,27 +75,44 @@ public:
 
 class dg_db_goods:public sqlite_orm {
 public:
-    std::string m_name;
-    std::string m_picture;
     std::string m_spec;
     int m_user_id = 0;
     int m_order_id = 0;
+    int m_good_id = 0;
     dg_db_goods(const std::string &_sql_file):sqlite_orm(_sql_file) {}
 
     std::vector<sqlite_orm_column> columns_defined() {
         std::vector<sqlite_orm_column> ret;
 
-        ret.push_back(sqlite_orm_column("name", sqlite_orm_column::STRING, &m_name));
-        ret.push_back(sqlite_orm_column("picture", sqlite_orm_column::STRING, &m_picture));
         ret.push_back(sqlite_orm_column("spec", sqlite_orm_column::STRING, &m_spec));
         ret.push_back(sqlite_orm_column("user_id", sqlite_orm_column::INTEGER, &m_user_id));
         ret.push_back(sqlite_orm_column("order_id", sqlite_orm_column::INTEGER, &m_order_id));
+        ret.push_back(sqlite_orm_column("good_id", sqlite_orm_column::INTEGER, &m_good_id));
 
         return ret;
     }
 
     std::string table_name() {
-        return "goods";
+        return "goods_order";
+    }
+};
+
+class dg_db_good_info:public sqlite_orm {
+public:
+    std::string m_name;
+    std::string m_picture;
+    dg_db_good_info(const std::string &_sqlite_file):sqlite_orm(_sqlite_file) {}
+    std::vector<sqlite_orm_column> columns_defined() {
+        std::vector<sqlite_orm_column> ret;
+
+        ret.push_back(sqlite_orm_column("name", sqlite_orm_column::STRING, &m_name, SQLITE_ORM_COLUMN_LIMIT_UNIQ));
+        ret.push_back(sqlite_orm_column("picture", sqlite_orm_column::STRING, &m_picture));
+
+        return ret;
+    }
+
+    std::string table_name() {
+        return "good_info";
     }
 };
 
