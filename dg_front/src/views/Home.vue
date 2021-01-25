@@ -106,6 +106,8 @@ export default {
                     console.log(vue_this.user_name);
                     vue_this.user_logo = vue_this.$remote_url + resp.data.result.user_logo;
                     vue_this.is_login = true;
+                } else {
+                    window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2f#wechat_redirect"
                 }
                 console.log(vue_this);
             }).catch(function (err) {
@@ -114,7 +116,9 @@ export default {
             });
         },
         query_order: function () {
-            this.$router.push({path:'/dg_order/' + this.dg_order_number})
+            this.$router.push({
+                path: '/dg_order/' + this.dg_order_number
+            })
         },
         nav_to_wx_login: function () {
             window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2f#wechat_redirect"

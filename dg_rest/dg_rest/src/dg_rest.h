@@ -70,6 +70,26 @@ struct dg_self_good
     int number;
 };
 
+struct dg_update_order_good_content {
+    std::string spec;
+    int number;
+};
+
+struct dg_update_order_good{
+    std::string ssid;
+    std::string order_id;
+    std::string name;
+    std::string spec;
+    dg_update_order_good_content content;
+};
+
+struct dg_delete_order_good{
+    std::string ssid;
+    std::string order_id;
+    std::string name;
+    std::string spec;
+};
+
 //! Dummy description for the service
 /*! Some detailed description of the service */
 // '*location' comment sets resource path for this service
@@ -126,6 +146,15 @@ public:
     // *location: /join_id/{ssid}
     // *method: GET
     std::vector<std::string> proc_my_orders(const std::string ssid);
+
+
+    // *location: /update_order
+    // *method: POST
+    std::string proc_update_order(const dg_update_order_good& update_info);
+
+    // *location: /delete_order
+    // *method: POST
+    std::string proc_delete_order(const dg_delete_order_good& delete_info);
 };
 
 

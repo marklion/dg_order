@@ -206,3 +206,64 @@ std::vector<std::string> dg_rest::proc_my_orders(const std::string ssid)
 
     return ret;
 }
+
+std::string dg_rest::proc_update_order(const dg_update_order_good& update_info)
+{
+    std::string ret = "failed";
+    int total_count = update_info.content.number;
+
+    auto opt_user = get_online_user_info(update_info.ssid);
+    if (opt_user)
+    {
+        std::string my_name;
+        std::string my_spec;
+        Base64::Decode(update_info.name, &my_name);
+        Base64::Decode(update_info.spec, &my_spec);
+        dg_get_self_good_by_order_id_and_name_and_spec(update_info.order_id, opt_user->get_pri_id(), my_name, my_spec, [&](dg_db_goods &_good) -> bool {
+            if (total_count > 0)
+            {
+                std::string con_spec;
+                Base64::Decode(update_info.content.spec, &con_spec);
+                if (con_spec != _good.m_spec)
+                {
+                    _good.m_spec = con_spec;
+                    _good.update_record();
+                }
+            }
+            else
+            {
+                _good.remove_record();                
+            }
+            total_count--;
+            return true;
+        });
+        for (int i = 0; i < total_count; i++)
+        {
+            std::string con_spec;
+            Base64::Decode(update_info.content.spec, &con_spec);
+            dg_insert_goods(my_name, con_spec, "none", atoi(update_info.order_id.c_str()), opt_user->get_pri_id());
+        }
+        ret = "success";
+    }
+
+    return ret;
+}
+
+std::string dg_rest::proc_delete_order(const dg_delete_order_good& delete_info)
+{
+    std::string my_name;
+    std::string my_spec;
+    Base64::Decode(delete_info.name, &my_name);
+    Base64::Decode(delete_info.spec, &my_spec);
+
+    auto opt_user = get_online_user_info(delete_info.ssid);
+    if (opt_user)
+    {
+        dg_get_self_good_by_order_id_and_name_and_spec(delete_info.order_id, opt_user->get_pri_id(), my_name, my_spec, [&](dg_db_goods &_good) -> bool {
+            _good.remove_record();
+            return true;
+        });
+    }
+
+    return "success";
+}
