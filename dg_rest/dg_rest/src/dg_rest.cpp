@@ -82,6 +82,7 @@ dg_order_show dg_rest::proc_dg_get_order(const std::string& order_id)
             Base64::Encode(p_order_conf->m_comments, &(ret.info.comments));
             ret.info.deliver_time = p_order_conf->m_deliver_time;
             ret.info.start_time = p_order_conf->m_start_time;
+            ret.order_id = p_order_conf->get_pri_id();
         }
     }
 
@@ -266,4 +267,50 @@ std::string dg_rest::proc_delete_order(const dg_delete_order_good& delete_info)
     }
 
     return "success";
+}
+
+std::vector<dg_order_created_resp> dg_rest::proc_created_orders(const std::string ssid)
+{
+    std::vector<dg_order_created_resp> ret;
+
+    auto user = get_online_user_info(ssid);
+    if (user)
+    {
+        auto orders = sqlite_orm::search_record_all<dg_db_order_owner>(DG_DB_FILE, "owner_user_id = %d", user->get_pri_id());
+        for (auto &itr:orders)
+        {
+            dg_order_created_resp tmp;
+            tmp.id = itr.get_pri_id();
+            Base64::Encode(user->m_name, &(tmp.user_name));
+            tmp.user_logo = user->m_logo;
+            Base64::Encode(itr.m_destination, &(tmp.destination));
+            tmp.start_time = itr.m_start_time;
+            tmp.deliever_time = itr.m_deliver_time;
+            ret.push_back(tmp);
+        }
+    }
+    return ret;
+}
+
+
+std::vector<std::string> dg_rest::proc_get_specs_by_name(const std::string& good_name)
+{
+    std::vector<std::string> ret;
+    std::string my_name;
+    g_log.log("good_name is %s", good_name.c_str());
+
+    Base64::Decode(good_name, &my_name, true);
+    auto good = sqlite_orm::search_record<dg_db_good_info>(DG_DB_FILE, "name = '%s'", my_name.c_str());
+
+    if (good) {
+        auto specs = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "good_id = %d GROUP BY spec", good->get_pri_id());
+        for (auto &itr:specs)
+        {
+            std::string my_spec;
+            Base64::Encode(itr.m_spec, &my_spec);
+            ret.push_back(my_spec);
+        }
+    }
+
+    return ret;
 }

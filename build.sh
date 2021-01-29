@@ -24,7 +24,7 @@ done
 [ -d ${BUILD_DIR}/conf ] || mkdir ${BUILD_DIR}/conf
 cp ${SRC_DIR}/nginx_conf/nginx.conf ${BUILD_DIR}/conf
 
-pushd ${SRC_DIR}/dg_front
+pushd ${SRC_DIR}/dg_vant/dg_vant
 [ -d node_modules ] || npm install 
 npm run build
 cp ${SRC_DIR}/MP_verify_Xvz7l2CgNLu5ll95.txt ./dist/

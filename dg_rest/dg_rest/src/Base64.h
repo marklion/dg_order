@@ -2,6 +2,7 @@
 #define BASE64_H
 
 #include <string>
+#include <algorithm>
 
 const char kBase64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                "abcdefghijklmnopqrstuvwxyz"
@@ -112,17 +113,29 @@ public:
         return (out == (out_begin + encoded_length));
     }
 
-    static bool Decode(const std::string &in, std::string *out)
+    static bool Decode(const std::string &in, std::string *out, bool _url_safe = false)
     {
+        std::string real_in(in);
+        if  (_url_safe)
+        {
+            std::replace(real_in.begin(), real_in.end(),'-', '+');
+            std::replace(real_in.begin(), real_in.end(),'_', '/');
+            auto in_len = real_in.length() % 4;
+            if (in_len != 0)
+            {
+                real_in.append(std::string("====").substr(0, in_len));
+            }
+        }
+
         int i = 0, j = 0;
         size_t dec_len = 0;
         unsigned char a3[3];
         unsigned char a4[4];
 
-        size_t input_len = in.size();
-        std::string::const_iterator input = in.begin();
+        size_t input_len = real_in.size();
+        std::string::const_iterator input = real_in.begin();
 
-        out->resize(DecodedLength(in));
+        out->resize(DecodedLength(real_in));
 
         while (input_len--)
         {

@@ -29,6 +29,7 @@ struct dg_order_show
     std::string order_owner_name;
     std::string order_owner_logo;
     dg_order_info info;
+    int order_id;
 };
 
 struct dg_order_config
@@ -88,6 +89,15 @@ struct dg_delete_order_good{
     std::string order_id;
     std::string name;
     std::string spec;
+};
+
+struct dg_order_created_resp {
+    int id;
+    std::string user_name;
+    std::string user_logo;
+    std::string destination;
+    std::string start_time;
+    std::string deliever_time;
 };
 
 //! Dummy description for the service
@@ -155,6 +165,14 @@ public:
     // *location: /delete_order
     // *method: POST
     std::string proc_delete_order(const dg_delete_order_good& delete_info);
+
+    // *location: /order_created/{ssid}
+    // *method: GET
+    std::vector<dg_order_created_resp> proc_created_orders(const std::string ssid);
+
+    // *location: /specs_by_name/{good_name}
+    // *method: GET
+    std::vector<std::string> proc_get_specs_by_name(const std::string& good_name);
 };
 
 

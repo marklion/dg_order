@@ -355,7 +355,7 @@ static int dg_fetch_good_info(const std::string &_name, const std::string &_pict
     {
         if (good_info->m_picture.length() <= 0)
         {
-            if (_picture != "none")
+            if (_picture.length() > 0 && _picture != "none")
             {
                 auto downlaod_img = dg_rest_req("https://api.weixin.qq.com/cgi-bin/media/get?access_token=" 
                     + g_acc_tok.get_content() + "&media_id=" + _picture);
@@ -369,7 +369,7 @@ static int dg_fetch_good_info(const std::string &_name, const std::string &_pict
     {
         dg_db_good_info new_good(DG_DB_FILE);
         new_good.m_name = _name;
-        if (_picture != "none")
+        if (_picture.length() > 0 && _picture != "none")
         {
             auto downlaod_img = dg_rest_req("https://api.weixin.qq.com/cgi-bin/media/get?access_token=" + g_acc_tok.get_content() + "&media_id=" + _picture);
             new_good.m_picture = dg_store_good_picture(downlaod_img, _name);
