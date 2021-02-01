@@ -4,7 +4,17 @@
         <template #left>
             <van-image :src="order_brief.order_owner_logo" height="45" width="45" round></van-image>
         </template>
+        <template #right>
+            <div @click="showShare = true">
+                <van-icon name="share-o" color="black" size="25px">
+                </van-icon>
+            </div>
+        </template>
     </van-nav-bar>
+    <van-share-sheet v-model="showShare" title="立即分享给好友" :options="ShareOptions" @select="onSelect" />
+    <van-overlay :show="show_share_dir" @click="show_share_dir = false">
+        <div class="dot_3_info">请点击三个点分享</div>
+    </van-overlay>
     <div style="height: 46px"></div>
     <van-row :gutter="5" type="flex" align="center" class="status_show">
         <van-col :span="12">
@@ -52,7 +62,7 @@
     </van-row>
     <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
         <van-swipe-cell v-for="(good, good_index) in goods_from_server" :key="good_index">
-            <van-card :num="good.total" :thumb="good.picture" :thumb-link="good.picture">
+            <van-card :num="good.total" :thumb="good.picture" @click-thumb="zoom_picture(good.picture)">
                 <template #title>
                     <div class="good_name_show">
                         {{good.name}}
@@ -99,6 +109,9 @@
             </div>
         </van-form>
     </van-dialog>
+    <van-popup v-model="show_good_img" style="width:100%" @click="show_good_img = false">
+        <van-image :src="show_good_img_content" width="100%"></van-image>
+    </van-popup>
 </div>
 </template>
 
@@ -115,6 +128,19 @@ export default {
     },
     data: function () {
         return {
+            show_good_img_content: '',
+            show_good_img: false,
+            show_share_dir: false,
+            showShare: false,
+            ShareOptions: [{
+                    name: '微信',
+                    icon: 'wechat'
+                },
+                {
+                    name: '朋友圈',
+                    icon: 'wechat-moments'
+                },
+            ],
             isLoading: false,
             is_ready: false,
             append_spec_select_name: '',
@@ -179,6 +205,15 @@ export default {
         };
     },
     methods: {
+        zoom_picture: function (_picture) {
+            this.show_good_img_content = _picture;
+            this.show_good_img = true;
+        },
+        onSelect: function (_opt) {
+            this.showShare = false;
+            this.show_share_dir = true;
+            console.log(_opt);
+        },
         onRefresh: function () {
             this.refresh_goods();
         },
@@ -463,5 +498,15 @@ export default {
 
 .info_for_append {
     color: rgb(206, 33, 62);
+}
+
+.dot_3_info {
+    color: aliceblue;
+    text-align: end;
+    font-size: 20px;
+}
+
+.share_div {
+    color: pink;
 }
 </style>

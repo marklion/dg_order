@@ -29,7 +29,7 @@ start_all_server() {
     line=`expr $line - 80` 
     tail -n $line $0 | tar zx  --skip-old-files -C /
     nginx -c /conf/nginx.conf
-    valgrind /root/.ngrest/ngrest-build/deploy/bin/ngrestserver -s /lib &
+    /root/.ngrest/ngrest-build/deploy/bin/ngrestserver -s /lib &
     bash
 }
 
