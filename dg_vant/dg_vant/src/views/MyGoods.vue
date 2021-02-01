@@ -22,7 +22,7 @@
     <van-divider>左滑修改规格或删除</van-divider>
     <van-button icon="exchange" type="warning" round :url="'/dg_order/' + get_order_number()" block size="small">查看全部</van-button>
     <van-swipe-cell v-for="(good, index) in goods" :key="index">
-        <van-card :num="good.number" :desc="good.spec" :title="good.name" :thumb="good.picture">
+        <van-card :num="good.number" :desc="good.spec" :title="good.name" :thumb="good.picture" @click-thumb="zoom_picture(good.picture)">
             <template #title>
                 <div class="good_name_show">
                     {{good.name}}
@@ -34,6 +34,10 @@
             <van-button square text="删除" type="danger" style="height: 100%" @click="delete_good(good)" />
         </template>
     </van-swipe-cell>
+
+    <van-popup v-model="show_good_img" style="width:100%" @click="show_good_img = false">
+        <van-image :src="show_good_img_content" width="100%"></van-image>
+    </van-popup>
 
     <van-dialog :title="'修改订单:' + orig_good.name" v-model="modify_diag" :show-confirm-button="true" :show-cancel-button="true" :close-on-click-overlay="true" @confirm="submit_modify">
         <van-field readonly clickable name="规格" :value="modify_good.spec" label="规格" placeholder="请选择规格" @click="show_selector = true" />
@@ -57,6 +61,8 @@ export default {
     name: 'MyGoods',
     data: function () {
         return {
+            show_good_img: false,
+            show_good_img_content: '',
             show_selector: false,
             orig_good: {
                 name: '',
@@ -98,6 +104,10 @@ export default {
         'specs-selector': SpecSelector
     },
     methods: {
+        zoom_picture: function (_picture) {
+            this.show_good_img_content = _picture;
+            this.show_good_img = true;
+        },
         delete_good: function (_good) {
             var vue_this = this;
             this.$toast.loading({
