@@ -50,37 +50,40 @@
             <van-button icon="exchange" type="warning" round :url="'/my_goods/' + get_order_number()" block size="small">只看自己的</van-button>
         </van-col>
     </van-row>
-    <van-swipe-cell v-for="(good, good_index) in goods_from_server" :key="good_index">
-        <van-card :num="good.total" :thumb="good.picture" :thumb-link="good.picture">
-            <template #title>
-                <div class="good_name_show">
-                    {{good.name}}
-                </div>
+    <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
+        <van-swipe-cell v-for="(good, good_index) in goods_from_server" :key="good_index">
+            <van-card :num="good.total" :thumb="good.picture" :thumb-link="good.picture">
+                <template #title>
+                    <div class="good_name_show">
+                        {{good.name}}
+                    </div>
+                </template>
+                <template #desc>
+                    <div class="expend_brief" v-text="has_ordered(good) + '(点击展开)'" @click="expend_detail(good_index)">
+                    </div>
+                    <div class="info_for_append">左滑购同款</div>
+                    <van-popup v-model="buyer_expend[good_index]" position="bottom" :style="{ height: '30%' }" get-container="body">
+                        <van-grid>
+                            <van-grid-item v-for="(buyer, index) in good.buyer" :key="index">
+                                <van-image :src="buyer.user_logo" height="35" width="35" round></van-image>
+                                <div>
+                                    {{buyer.user_name}}
+                                </div>
+                                <div class="spec_show">
+                                    {{buyer.spec}}x{{buyer.number}}
+                                </div>
+                            </van-grid-item>
+                        </van-grid>
+                    </van-popup>
+                </template>
+            </van-card>
+            <template #right>
+                <van-button style="height:100%" type="primary" text="购同款" @click="open_append_good_diag(good.name)" />
             </template>
-            <template #desc>
-                <div class="expend_brief" v-text="has_ordered(good) + '(点击展开)'" @click="expend_detail(good_index)">
-                </div>
-                <div class="info_for_append">左滑购同款</div>
-                <van-popup v-model="buyer_expend[good_index]" position="bottom" :style="{ height: '30%' }" get-container="body">
-                    <van-grid>
-                        <van-grid-item v-for="(buyer, index) in good.buyer" :key="index">
-                            <van-image :src="buyer.user_logo" height="35" width="35" round></van-image>
-                            <div>
-                                {{buyer.user_name}}
-                            </div>
-                            <div class="spec_show">
-                                {{buyer.spec}}x{{buyer.number}}
-                            </div>
-                        </van-grid-item>
-                    </van-grid>
-                </van-popup>
-            </template>
-        </van-card>
-        <template #right>
-            <van-button style="height:100%" type="primary" text="购同款" @click="open_append_good_diag(good.name)" />
-        </template>
 
-    </van-swipe-cell>
+        </van-swipe-cell>
+
+    </van-pull-refresh>
     <van-dialog class="mount_po" :title="append_spec_select_name" v-model="append_good_order_diag" :show-confirm-button="false" :show-cancel-button="true" :close-on-click-overlay="true">
         <van-form @submit="append_good">
             <van-field readonly clickable name="规格" :value="good_add_form.spec" label="规格" placeholder="请选择规格" @click="popup_select_spec" />
@@ -112,6 +115,7 @@ export default {
     },
     data: function () {
         return {
+            isLoading: false,
             is_ready: false,
             append_spec_select_name: '',
             append_select_spec_show: false,
@@ -175,6 +179,9 @@ export default {
         };
     },
     methods: {
+        onRefresh: function () {
+            this.refresh_goods();
+        },
         popup_select_spec: function () {
             this.append_select_spec_show = true;
         },
@@ -225,6 +232,7 @@ export default {
                         });
                     });
                 });
+                vue_this.isLoading = false;
                 console.log(vue_this.goods_from_server);
             }).catch(function (err) {
                 console.log(err);
@@ -440,7 +448,7 @@ export default {
 
 .expend_brief {
     text-decoration: underline;
-    font-size:14px;
+    font-size: 14px;
 }
 
 .spec_show {
@@ -452,6 +460,7 @@ export default {
     font-size: 20px;
     font-weight: bold;
 }
+
 .info_for_append {
     color: rgb(206, 33, 62);
 }
