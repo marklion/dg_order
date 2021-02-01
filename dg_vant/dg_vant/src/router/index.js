@@ -5,6 +5,7 @@ import DgOrder from '../views/DgOrder.vue'
 import MySelf from '../views/MySelf.vue'
 import WechatLogin from '../views/WechatLogin.vue'
 import DgOrderGood from '../views/DgOrderGood.vue'
+import MyGoods from '../views/MyGoods.vue'
 
 Vue.use(VueRouter)
 
@@ -33,6 +34,11 @@ const routes = [
     path: '/dg_order/:order_number',
     name: 'DgOrderGood',
     component: DgOrderGood
+  },
+  {
+    path: '/my_goods/:order_number',
+    name: 'MyGoods',
+    component: MyGoods 
   },
 ]
 

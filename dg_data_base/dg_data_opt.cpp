@@ -7,6 +7,7 @@
 #include <openssl/sha.h>
 #include <openssl/crypto.h>
 #include "Base64.h"
+#include <algorithm>
 
 static tdf_log g_log("dg_data_opt");
 
@@ -88,6 +89,9 @@ static std::string dg_store_good_picture(const std::string &_pic, const std::str
 
     std::string base_name;
     Base64::Encode(_name, &base_name);
+    std::replace(base_name.begin(), base_name.end(), '/', '_');
+    std::replace(base_name.begin(), base_name.end(), '+', '-');
+
     file_name.append(base_name);
     file_name.append(std::to_string(time(NULL)));
     file_name.append(".jpg");

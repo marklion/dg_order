@@ -1,10 +1,11 @@
 <template>
-<div class="dg_order_good_show" v-if="is_login">
-    <van-nav-bar :title="order_brief.order_owner_name + order_brief.destination + '代购'" :fixed="true" :placeholder="true" :safe-area-inset-top="true">
+<div class="dg_order_good_show" v-if="should_show">
+    <van-nav-bar :title="order_brief.order_owner_name + order_brief.destination + '代购'" :fixed="true" :safe-area-inset-top="true">
         <template #left>
             <van-image :src="order_brief.order_owner_logo" height="45" width="45" round></van-image>
         </template>
     </van-nav-bar>
+    <div style="height: 46px"></div>
     <van-row :gutter="5" type="flex" align="center" class="status_show">
         <van-col :span="12">
             <div>{{status()}}</div>
@@ -40,16 +41,17 @@
             </div>
         </van-form>
     </van-dialog>
-    <van-row :gutter="5" type="flex" align="center">
-        <van-col :span="16">
-            <van-divider>总计{{goods_total_count()}}件</van-divider>
+    <van-divider>总计{{goods_total_count()}}件</van-divider>
+    <van-row :gutter="10">
+        <van-col :span="12">
+            <van-button icon="plus" type="info" round @click="add_good_order_diag = true" block size="small">添加心愿</van-button>
         </van-col>
-        <van-col class="" :span="8">
-            <van-button icon="plus" type="info" round @click="add_good_order_diag = true">添加心愿</van-button>
+        <van-col :span="12">
+            <van-button icon="exchange" type="warning" round :url="'/my_goods/' + get_order_number()" block size="small">只看自己的</van-button>
         </van-col>
     </van-row>
     <van-swipe-cell v-for="(good, good_index) in goods_from_server" :key="good_index">
-        <van-card :num="good.total" :thumb="good.picture">
+        <van-card :num="good.total" :thumb="good.picture" :thumb-link="good.picture">
             <template #title>
                 <div class="good_name_show">
                     {{good.name}}
@@ -58,6 +60,7 @@
             <template #desc>
                 <div class="expend_brief" v-text="has_ordered(good) + '(点击展开)'" @click="expend_detail(good_index)">
                 </div>
+                <div class="info_for_append">左滑购同款</div>
                 <van-popup v-model="buyer_expend[good_index]" position="bottom" :style="{ height: '30%' }" get-container="body">
                     <van-grid>
                         <van-grid-item v-for="(buyer, index) in good.buyer" :key="index">
@@ -109,6 +112,7 @@ export default {
     },
     data: function () {
         return {
+            is_ready: false,
             append_spec_select_name: '',
             append_select_spec_show: false,
             show_selector: false,
@@ -163,6 +167,10 @@ export default {
                 }
 
                 return ret;
+            },
+
+            should_show: function () {
+                return this.is_login && this.is_ready;
             },
         };
     },
@@ -342,6 +350,12 @@ export default {
 
     },
     beforeMount: function () {
+        this.$toast.loading({
+            message: '正在打开',
+            forbidClick: true,
+            duration: 3000,
+        });
+
         this.order_number = this.get_order_number();
         var vue_this = this;
         this.$axios.get(this.$remote_rest_url_header + 'dg_order/' + this.order_number).then(function (resp) {
@@ -374,7 +388,7 @@ export default {
                 timestamp: timestamp,
                 nonceStr: nonceStr,
                 signature: resp.data.result,
-                jsApiList: ['updateAppMessageShareData', 'chooseImage', 'uploadImage', 'getLocalImgData']
+                jsApiList: ['updateAppMessageShareData', 'chooseImage', 'uploadImage', 'getLocalImgData', 'updateTimelineShareData']
             });
             wx.ready(function () {
                 console.log('success to config wx');
@@ -387,6 +401,16 @@ export default {
                         console.log('success to set share btn');
                     }
                 });
+                wx.updateTimelineShareData({
+                    title: vue_this.order_brief.order_owner_name + '的代购清单',
+                    link: window.location.href,
+                    imgUrl: vue_this.order_brief.order_owner_logo,
+                    success: function () {
+                        console.log('success to set share btn');
+                    }
+                });
+                vue_this.is_ready = true;
+                vue_this.$toast.clear();
             });
             wx.error(function (err) {
                 console.log('fail to config wx');
@@ -416,6 +440,7 @@ export default {
 
 .expend_brief {
     text-decoration: underline;
+    font-size:14px;
 }
 
 .spec_show {
@@ -426,5 +451,8 @@ export default {
 .good_name_show {
     font-size: 20px;
     font-weight: bold;
+}
+.info_for_append {
+    color: rgb(206, 33, 62);
 }
 </style>

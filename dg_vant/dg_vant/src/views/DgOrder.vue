@@ -3,11 +3,11 @@
     <van-nav-bar title="订单" :fixed="true" :placeholder="true" :safe-area-inset-top="true"></van-nav-bar>
     <van-tabs v-model="active" animated>
         <van-tab title="我参与的代购">
+            <van-divider>左滑查看我购买的</van-divider>
             <van-swipe-cell v-for="order in joined_by_me" :key="order.id">
                 <van-cell :title="order.user_name" :value="order.destination" :label="order.start_time" is-link :url="/dg_order/ + order.id" />
                 <template #right>
-                    <van-button style="height:100%" square type="primary" text="修改" />
-                    <van-button style="height:100%" square type="danger" text="删除" />
+                    <van-button style="height:100%" square type="primary" text="我的" :url="/my_goods/ + order.id" />
                 </template>
             </van-swipe-cell>
         </van-tab>
