@@ -285,7 +285,8 @@ std::vector<dg_order_created_resp> dg_rest::proc_created_orders(const std::strin
             tmp.user_logo = user->m_logo;
             Base64::Encode(itr.m_destination, &(tmp.destination));
             tmp.start_time = itr.m_start_time;
-            tmp.deliever_time = itr.m_deliver_time;
+            tmp.deliver_time = itr.m_deliver_time;
+            Base64::Encode(itr.m_comments, &(tmp.comments));
             ret.push_back(tmp);
         }
     }
@@ -309,6 +310,30 @@ std::vector<std::string> dg_rest::proc_get_specs_by_name(const std::string& good
             std::string my_spec;
             Base64::Encode(itr.m_spec, &my_spec);
             ret.push_back(my_spec);
+        }
+    }
+
+    return ret;
+}
+
+std::string dg_rest::proc_order_brief_change(const std::string& ssid, const dg_order_brief_change& order_brief)
+{
+    std::string ret = "failed";
+
+    auto opt_user = get_online_user_info(ssid);
+    if (opt_user)
+    {
+        auto order_info = dg_get_order(std::to_string(order_brief.id));
+        if (order_info && order_info->m_owner_user_id == opt_user->get_pri_id())
+        {
+            Base64::Decode(order_brief.comments, &(order_info->m_comments));
+            Base64::Decode(order_brief.destination, &(order_info->m_destination));
+            order_info->m_start_time = order_brief.start_time;
+            order_info->m_deliver_time = order_brief.deliver_time;
+            if (order_info->update_record())
+            {
+                ret = "success";
+            }
         }
     }
 

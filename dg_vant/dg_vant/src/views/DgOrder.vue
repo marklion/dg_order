@@ -16,9 +16,23 @@
             <van-swipe-cell v-for="order in created_by_me" :key="order.id">
                 <van-cell :title="order.user_name" :value="order.destination" :label="order.start_time" is-link :url="/dg_order/ + order.id" />
                 <template #right>
-                    <van-button style="height:100%" square type="primary" text="编辑" />
+                    <van-button style="height:100%" square type="primary" text="编辑" @click="pop_out_modify(order)" />
                 </template>
             </van-swipe-cell>
+            <van-dialog title="代购信息修改" v-model="modify_order_diag" :show-confirm-button="false" :show-cancel-button="true" :close-on-click-overlay="true" get-container="body">
+                <van-form @submit="onModifyOrder">
+                    <van-field v-model="order_brief.destination" name="目的地" label="目的地" placeholder="目的地" :rules="[{ required: true, message: '请填写目的地' }]" />
+                    <van-field readonly clickable name="calendar" :value="order_brief.start_time" label="出发日期" placeholder="点击选择日期" @click="show_start_calendar = true" :rules="[{ required: true, message: '请选择出发日期' }]" />
+                    <van-calendar v-model="show_start_calendar" @confirm="on_start_time_confirm" get-container="body" />
+                    <van-field readonly clickable name="calendar" :value="order_brief.deliver_time" label="预计发货日期" placeholder="点击选择日期" @click="show_deliver_calendar = true" :rules="[{ required: true, message: '请选择发货日期' }]" />
+                    <van-calendar v-model="show_deliver_calendar" @confirm="on_deliver_time_confirm" get-container="body" />
+                    <van-field v-model="order_brief.comments" name="备注" label="备注" placeholder="备注" rows="2" autosize type="textarea" />
+                    <div style="margin: 16px;">
+                        <van-button round block type="info" native-type="submit">提交</van-button>
+                    </div>
+                </van-form>
+            </van-dialog>
+
         </van-tab>
     </van-tabs>
 </div>
@@ -36,9 +50,58 @@ export default {
             created_by_me: [],
             joined_by_me: [],
             active: 0,
+            order_brief: {
+                id:0,
+                destination: '',
+                start_time: '',
+                deliver_time: '',
+                comments: '',
+            },
+            modify_order_diag: false,
+            show_start_calendar:false,
+            show_deliver_calendar:false,
         };
     },
     methods: {
+        on_start_time_confirm: function (date) {
+            this.show_start_calendar = false;
+            this.order_brief.start_time = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+        },
+        on_deliver_time_confirm: function (date) {
+            this.show_deliver_calendar = false;
+            this.order_brief.deliver_time = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+        },
+
+        onModifyOrder: function () {
+            console.log(this.order_brief);
+            this.modify_order_diag = false;
+            var vue_this = this;
+            Base64.extendString();
+            this.$axios.post(this.$remote_rest_url_header + 'order_brief_change', {
+                ssid:vue_this.$cookies.get('ssid'),
+                order_brief: {
+                    id:vue_this.order_brief.id,
+                    start_time:vue_this.order_brief.start_time,
+                    deliver_time:vue_this.order_brief.deliver_time,
+                    destination:vue_this.order_brief.destination.toBase64(),
+                    comments: vue_this.order_brief.comments.toBase64(),
+                },
+            }).then(function(resp) {
+                console.log(resp);
+                vue_this.get_created_orders();
+            }).catch(function(err) {
+                console.log(err);
+            });
+        },
+        pop_out_modify: function (_order) {
+            console.log(_order);
+            this.order_brief.destination = _order.destination;
+            this.order_brief.start_time = _order.start_time;
+            this.order_brief.deliver_time = _order.deliver_time;
+            this.order_brief.comments = _order.comments;
+            this.order_brief.id = _order.id;
+            this.modify_order_diag = true;
+        },
         get_user_info: function () {
             var vue_this = this;
             var ssid = this.$cookies.get('ssid');
@@ -61,6 +124,7 @@ export default {
         get_created_orders: function () {
             var vue_this = this;
             var ssid = this.$cookies.get('ssid');
+            Base64.extendString();
             this.$axios.get(this.$remote_rest_url_header + 'order_created/' + ssid).then(function (resp) {
                 resp.data.result.forEach((element, index) => {
                     vue_this.$set(vue_this.created_by_me, index, {
@@ -70,6 +134,7 @@ export default {
                         destination: element.destination.fromBase64(),
                         start_time: element.start_time,
                         deliver_time: element.deliver_time,
+                        comments: element.comments.fromBase64(),
                     });
                 });
             }).catch(function (err) {

@@ -97,7 +97,16 @@ struct dg_order_created_resp {
     std::string user_logo;
     std::string destination;
     std::string start_time;
-    std::string deliever_time;
+    std::string deliver_time;
+    std::string comments;
+};
+
+struct dg_order_brief_change{
+    int id;
+    std::string destination;
+    std::string start_time;
+    std::string deliver_time;
+    std::string comments;
 };
 
 //! Dummy description for the service
@@ -173,6 +182,10 @@ public:
     // *location: /specs_by_name/{good_name}
     // *method: GET
     std::vector<std::string> proc_get_specs_by_name(const std::string& good_name);
+
+    // *location: /order_brief_change
+    // *method: POST
+    std::string proc_order_brief_change(const std::string& ssid, const dg_order_brief_change& order_brief);
 };
 
 
