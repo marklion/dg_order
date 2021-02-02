@@ -29,6 +29,7 @@ pushd ${SRC_DIR}/dg_vant/dg_vant
 npm run build
 cp ${SRC_DIR}/MP_verify_Xvz7l2CgNLu5ll95.txt ./dist/
 mkdir ./dist/logo_res
+cp ${SRC_DIR}/no_pic.jpg ./dist/logo_res/
 cp ./dist -a ${BUILD_DIR}/
 popd
 

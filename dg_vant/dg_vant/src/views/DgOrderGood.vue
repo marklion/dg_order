@@ -62,11 +62,18 @@
     </van-row>
     <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
         <van-swipe-cell v-for="(good, good_index) in goods_from_server" :key="good_index">
-            <van-card :num="good.total" :thumb="good.picture" @click-thumb="zoom_picture(good.picture)">
+            <van-card :num="good.total" @click-thumb="zoom_picture(good.picture)">
                 <template #title>
                     <div class="good_name_show">
                         {{good.name}}
                     </div>
+                </template>
+                <template #thumb>
+                    <van-image :src="good.picture" fit="cover" height="88" width="88">
+                        <template v-slot:error>
+                            <van-image src="http://www.d8sis.cn/logo_res/no_pic.jpg"></van-image>
+                        </template>
+                    </van-image>
                 </template>
                 <template #desc>
                     <div class="expend_brief" v-text="has_ordered(good) + '(点击展开)'" @click="expend_detail(good_index)">

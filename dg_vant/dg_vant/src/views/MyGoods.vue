@@ -22,12 +22,20 @@
     <van-divider>左滑修改规格或删除</van-divider>
     <van-button icon="exchange" type="warning" round :url="'/dg_order/' + get_order_number()" block size="small">查看全部</van-button>
     <van-swipe-cell v-for="(good, index) in goods" :key="index">
-        <van-card :num="good.number" :desc="good.spec" :title="good.name" :thumb="good.picture" @click-thumb="zoom_picture(good.picture)">
+        <van-card :num="good.number" :desc="good.spec" :title="good.name" @click-thumb="zoom_picture(good.picture)">
             <template #title>
                 <div class="good_name_show">
                     {{good.name}}
                 </div>
             </template>
+            <template #thumb>
+                <van-image :src="good.picture" fit="cover" height="88" width="88">
+                    <template v-slot:error>
+                        <van-image src="http://www.d8sis.cn/logo_res/no_pic.jpg"></van-image>
+                    </template>
+                </van-image>
+            </template>
+
         </van-card>
         <template #right>
             <van-button square text="修改" type="primary" style="height: 100%" @click="show_modify_diag(good)" />
