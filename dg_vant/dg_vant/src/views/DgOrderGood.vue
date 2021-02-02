@@ -5,10 +5,20 @@
             <van-image :src="order_brief.order_owner_logo" height="45" width="45" round></van-image>
         </template>
         <template #right>
-            <div @click="showShare = true">
-                <van-icon name="share-o" color="black" size="25px">
-                </van-icon>
-            </div>
+            <van-row :gutter="3">
+                <van-col :span="12">
+                    <div @click="nav_to_list" v-if="user_is_host">
+                        <van-icon name="todo-list-o" color="black" size="25px">
+                        </van-icon>
+                    </div>
+                </van-col>
+                <van-col :span="12">
+                    <div @click="showShare = true">
+                        <van-icon name="share-o" color="black" size="25px">
+                        </van-icon>
+                    </div>
+                </van-col>
+            </van-row>
         </template>
     </van-nav-bar>
     <van-share-sheet v-model="showShare" title="立即分享给好友" :options="ShareOptions" @select="onSelect" />
@@ -135,6 +145,7 @@ export default {
     },
     data: function () {
         return {
+            user_is_host: false,
             show_good_img_content: '',
             show_good_img: false,
             show_share_dir: false,
@@ -212,6 +223,11 @@ export default {
         };
     },
     methods: {
+        nav_to_list: function () {
+            this.$router.push({
+                path: '/list/' + this.get_order_number()
+            });
+        },
         zoom_picture: function (_picture) {
             this.show_good_img_content = _picture;
             this.show_good_img = true;
@@ -397,7 +413,20 @@ export default {
             }
             return pwd;
         },
-
+        get_host_user:function() {
+            var vue_this = this;
+            vue_this.$axios.post(vue_this.$remote_rest_url_header + 'host_of', {
+                ssid: vue_this.$cookies.get('ssid'),
+                order_id: vue_this.get_order_number(),
+            }).then(function (resp) {
+                if (resp.data.result)
+                {
+                    vue_this.user_is_host = true;
+                }
+            }).catch(function (err) {
+                console.log(err);
+            });
+        },
     },
     beforeMount: function () {
         this.$toast.loading({
@@ -405,7 +434,7 @@ export default {
             forbidClick: true,
             duration: 3000,
         });
-
+        this.get_host_user();
         this.order_number = this.get_order_number();
         var vue_this = this;
         this.$axios.get(this.$remote_rest_url_header + 'dg_order/' + this.order_number).then(function (resp) {

@@ -6,6 +6,7 @@ import MySelf from '../views/MySelf.vue'
 import WechatLogin from '../views/WechatLogin.vue'
 import DgOrderGood from '../views/DgOrderGood.vue'
 import MyGoods from '../views/MyGoods.vue'
+import List from '../views/List.vue'
 
 Vue.use(VueRouter)
 
@@ -39,6 +40,11 @@ const routes = [
     path: '/my_goods/:order_number',
     name: 'MyGoods',
     component: MyGoods 
+  },
+  {
+    path: '/list/:order_number',
+    name: 'List',
+    component: List 
   },
 ]
 

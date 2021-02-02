@@ -339,3 +339,20 @@ std::string dg_rest::proc_order_brief_change(const std::string& ssid, const dg_o
 
     return ret;
 }
+
+bool dg_rest::proc_host_of(const std::string& ssid, const std::string& order_id)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    if (opt_user)
+    {
+        auto order = dg_get_order(order_id);
+        if (order && order->m_owner_user_id == opt_user->get_pri_id())
+        {
+            ret = true;
+        }
+    }
+
+    return ret;
+}

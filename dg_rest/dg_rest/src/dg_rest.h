@@ -186,6 +186,10 @@ public:
     // *location: /order_brief_change
     // *method: POST
     std::string proc_order_brief_change(const std::string& ssid, const dg_order_brief_change& order_brief);
+
+    // *location: /host_of
+    // *method: POST
+    bool proc_host_of(const std::string& ssid, const std::string& order_id);
 };
 
 
