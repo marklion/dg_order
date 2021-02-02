@@ -477,3 +477,8 @@ void dg_get_self_good_by_order_id_and_name_and_spec(const std::string &_order_id
         }
     }
 }
+
+std::unique_ptr<dg_db_goods> dg_get_order_good(int _priv_id)
+{
+    return sqlite_orm::search_record<dg_db_goods>(DG_DB_FILE, "PRI_ID = %d", _priv_id);
+}

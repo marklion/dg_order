@@ -109,6 +109,18 @@ struct dg_order_brief_change{
     std::string comments;
 };
 
+struct dg_all_goods_order {
+    int id;
+    std::string name;
+    std::string picture;
+    std::string spec;
+    std::string user_name;
+    std::string user_logo;
+    std::string status;
+};
+
+
+
 //! Dummy description for the service
 /*! Some detailed description of the service */
 // '*location' comment sets resource path for this service
@@ -190,6 +202,15 @@ public:
     // *location: /host_of
     // *method: POST
     bool proc_host_of(const std::string& ssid, const std::string& order_id);
+
+    // *location: /dg_order/all_goods/{order_id}
+    // *method: GET
+    std::vector<dg_all_goods_order> proc_all_goods(const std::string& order_id);
+
+
+    // *location: /update_status
+    // *method: POST
+    bool proc_update_status(const std::string& ssid, int id, const std::string& status);
 };
 
 

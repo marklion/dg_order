@@ -27,5 +27,6 @@ void dg_get_joined_id(int _user_id, std::function<bool ( const dg_db_goods &)> c
 const std::string dg_wx_sign(const std::string& nonceStr, long timestamp, const std::string &url);
 
 std::unique_ptr<dg_db_goods> dg_get_order_good(int _order_id, int _user_id, const std::string &_name, const std::string &_spec);
+std::unique_ptr<dg_db_goods> dg_get_order_good(int _priv_id);
 
 #endif // _DG_DATA_OPT_H

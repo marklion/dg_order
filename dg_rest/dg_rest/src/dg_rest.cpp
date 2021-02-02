@@ -356,3 +356,56 @@ bool dg_rest::proc_host_of(const std::string& ssid, const std::string& order_id)
 
     return ret;
 }
+
+std::vector<dg_all_goods_order> dg_rest::proc_all_goods(const std::string& order_id)
+{
+    std::vector<dg_all_goods_order> ret;
+
+    auto all_goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = '%s'", order_id.c_str());
+    for (auto &single_good:all_goods)
+    {
+        auto good_info = dg_get_good_info(single_good.m_good_id);
+        auto user_info = get_user_info(single_good.m_user_id);
+        if (good_info != nullptr && nullptr != user_info)
+        {
+            dg_all_goods_order order;
+            order.id = single_good.get_pri_id();
+            Base64::Encode(user_info->m_name, &(order.user_name));
+            order.user_logo = user_info->m_logo;
+            Base64::Encode(good_info->m_name, &(order.name));
+            Base64::Encode(single_good.m_spec, &(order.spec));
+            order.picture = good_info->m_picture;
+            if (single_good.m_status.length() <= 0)
+            {
+                single_good.m_status = "booking";
+                single_good.update_record();
+            }
+            order.status = single_good.m_status;
+            ret.push_back(order);
+        }
+    }
+
+    return ret;
+}
+
+bool dg_rest::proc_update_status(const std::string& ssid, int id, const std::string& status)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    if (opt_user)
+    {
+        auto good_record = dg_get_order_good(id);
+        if (good_record)
+        {
+            auto order = dg_get_order(std::to_string( good_record->m_order_id));
+            if (order && order->m_owner_user_id == opt_user->get_pri_id())
+            {
+                good_record->m_status = status;
+                ret = good_record->update_record();
+            }
+        }
+    }
+
+    return ret;
+}
