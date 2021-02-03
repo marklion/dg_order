@@ -138,6 +138,10 @@ std::string dg_rest::proc_dg_insert_goods(const dg_good_insert& good)
             Base64::Decode(good.name, &my_name);
             std::string my_spec;
             Base64::Decode(good.spec, &my_spec);
+            if (my_spec.length() <= 0)
+            {
+                my_spec = "默认规格";
+            }
             if (dg_insert_goods(my_name, my_spec, good.img, atoi(good.order_id.c_str()), p_online_user->get_pri_id()).size() <= 0)
             {
                 ret = "failed";
@@ -167,7 +171,7 @@ std::vector<dg_self_good> dg_rest::proc_my_order_get(const std::string& order_id
             {
                 return false;
             }
-            auto charect = good_info->m_name + _good.m_spec;
+            auto charect = good_info->m_name + _good.m_spec + _good.m_status;
             auto p_exist = tmp_ret[charect];
             if (nullptr == p_exist)
             {
@@ -177,6 +181,7 @@ std::vector<dg_self_good> dg_rest::proc_my_order_get(const std::string& order_id
                 Base64::Encode(_good.m_spec, &(p_exist->spec));
                 p_exist->picture = good_info->m_picture;
                 p_exist->number = 0;
+                p_exist->status = _good.m_status;
             }
             p_exist->number++;
 
@@ -225,6 +230,10 @@ std::string dg_rest::proc_update_order(const dg_update_order_good& update_info)
             {
                 std::string con_spec;
                 Base64::Decode(update_info.content.spec, &con_spec);
+                if (con_spec.length() <= 0)
+                {
+                    con_spec = "默认规格";
+                }
                 if (con_spec != _good.m_spec)
                 {
                     _good.m_spec = con_spec;

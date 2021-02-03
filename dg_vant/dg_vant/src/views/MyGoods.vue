@@ -22,7 +22,10 @@
     <van-divider>左滑修改规格或删除</van-divider>
     <van-button icon="exchange" type="warning" round :url="'/dg_order/' + get_order_number()" block size="small">查看全部</van-button>
     <van-swipe-cell v-for="(good, index) in goods" :key="index">
-        <van-card :num="good.number" :desc="good.spec" :title="good.name" @click-thumb="zoom_picture(good.picture)">
+        <van-card :num="good.number" :title="good.name" @click-thumb="zoom_picture(good.picture)">
+            <template #desc>
+                <div class="spec_status_show" v-text="good.spec + '-->' + status_show_str(good.status)"></div>
+            </template>
             <template #title>
                 <div class="good_name_show">
                     {{good.name}}
@@ -69,6 +72,25 @@ export default {
     name: 'MyGoods',
     data: function () {
         return {
+            status_show_str:function(_status) {
+                var ret = '预定';
+
+                switch (_status) {
+                    case 'booking':
+                        ret = '预定';
+                        break;
+                    case 'bought' :
+                        ret = '已购买'
+                        break; 
+                    case 'delivered' :
+                        ret = '已发货'
+                        break; 
+                    default:
+                        break;
+                }
+
+                return ret;
+            },
             show_good_img: false,
             show_good_img_content: '',
             show_selector: false,
@@ -210,7 +232,8 @@ export default {
                         name: element.name.fromBase64(),
                         picture: vue_this.$remote_url + element.picture,
                         spec: element.spec.fromBase64(),
-                        number: element.number
+                        number: element.number,
+                        status: element.status,
                     });
                 });
             }).catch(function (err) {
@@ -258,5 +281,9 @@ export default {
 .good_name_show {
     font-size: 20px;
     font-weight: bold;
+}
+.spec_status_show {
+    font-size: 14px;
+    color: red;
 }
 </style>

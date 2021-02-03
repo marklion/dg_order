@@ -5,6 +5,9 @@
             <van-image :src="order_brief.order_owner_logo" height="45" width="45" round></van-image>
         </template>
     </van-nav-bar>
+    <van-dropdown-menu>
+        <van-dropdown-item v-model="cur_filter" :options="filter_options" />
+    </van-dropdown-menu>
     <van-tabs v-model="sort_by">
         <van-tab title="按商品分类">
             <van-row>
@@ -15,7 +18,7 @@
                 </van-col>
                 <van-col>
                     <div class="content_show">
-                        <van-image :src="get_picture_by_name(filter_good_name()[good_name])"></van-image>
+                        <van-image :src="get_picture_by_name(filter_good_name()[good_name])" v-if="get_picture_by_name(filter_good_name()[good_name]) != ''"></van-image>
                         <div v-for="(good, index) in get_goods_by_name(filter_good_name()[good_name])" :key="index">
                             <van-row :gutter="5" type="flex" align="center">
                                 <van-col :span="3">
@@ -78,6 +81,13 @@ export default {
     },
     data: function () {
         return {
+            cur_filter: 'all',
+            filter_options: [
+                {text:'全部', value:'all'},
+                {text:'未购买', value:'booking'},
+                {text:'已购买', value:'bought'},
+                {text:'已发货', value:'delivered'},
+            ],
             good_buyer: 0,
             sort_by: 0,
             good_name: 0,
@@ -97,29 +107,49 @@ export default {
             },
             filter_buyer: function () {
                 var ret = [];
+                var vue_this = this;
 
                 this.all_goods.forEach(element => {
-                    if (ret.indexOf(element.user_logo) == -1) {
+                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && ret.indexOf(element.user_logo) == -1) {
                         ret.push(element.user_logo);
                     }
                 });
+                ret.sort();
+
+                return ret;
+            },
+            status_in_filter:function(_status, _cur_filter) {
+                var ret = false;
+                if ('all' == this.cur_filter)
+                {
+                    ret = true;
+                }
+                else
+                {
+                    if (_status == _cur_filter)
+                    {
+                        ret = true;
+                    }
+                }
 
                 return ret;
             },
             filter_good_name: function () {
                 var ret = [];
+                var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (ret.indexOf(element.name) == -1) {
+                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && ret.indexOf(element.name) == -1) {
                         ret.push(element.name);
                     }
                 });
+                ret.sort();
                 return ret;
             },
             get_count_by_logo: function (_logo) {
                 var ret = 0;
-
+                var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (element.user_logo == _logo) {
+                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && element.user_logo == _logo) {
                         ret = ret + 1;
                     }
                 });
@@ -128,8 +158,9 @@ export default {
             },
             get_count_by_name: function (_name) {
                 var ret = 0;
+                var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (element.name == _name) {
+                    if (element.name == _name && vue_this.status_in_filter(element.status, vue_this.cur_filter)) {
                         ret = ret + 1;
                     }
                 });
@@ -160,8 +191,9 @@ export default {
             },
             get_good_by_buyer_logo: function (_logo) {
                 var ret = [];
+                var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (element.user_logo == _logo) {
+                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && element.user_logo == _logo) {
                         ret.push(element);
                     }
                 });
@@ -170,9 +202,10 @@ export default {
             },
             get_goods_by_name: function (_name) {
                 var ret = [];
+                var vue_this = this;
 
                 this.all_goods.forEach(element => {
-                    if (_name == element.name) {
+                    if (_name == element.name && vue_this.status_in_filter(element.status, vue_this.cur_filter)) {
                         ret.push(element)
                     }
                 });
@@ -186,16 +219,15 @@ export default {
             console.log(_cs);
             var vue_this = this;
             this.$axios.post(this.$remote_rest_url_header + 'update_status', {
-                ssid:this.$cookies.get('ssid'),
-                id:_cs.id,
-                status:_cs.status,
+                ssid: this.$cookies.get('ssid'),
+                id: _cs.id,
+                status: _cs.status,
             }).then(function (resp) {
-                if (resp.data.result == true)
-                {
+                if (resp.data.result == true) {
                     vue_this.get_all_goods();
                 }
                 console.log(resp);
-            }).catch(function(err) {
+            }).catch(function (err) {
                 console.log(err);
             });
         },
@@ -291,7 +323,8 @@ export default {
     font-size: 14px;
     color: gray;
 }
+
 .status_show {
-    width:140px;
+    width: 140px;
 }
 </style>

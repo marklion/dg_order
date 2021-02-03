@@ -69,6 +69,7 @@ struct dg_self_good
     std::string picture;
     std::string spec;
     int number;
+    std::string status;
 };
 
 struct dg_update_order_good_content {
