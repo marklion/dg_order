@@ -70,6 +70,8 @@ struct dg_self_good
     std::string spec;
     int number;
     std::string status;
+    std::string address;
+    std::string express;
 };
 
 struct dg_update_order_good_content {
@@ -118,6 +120,8 @@ struct dg_all_goods_order {
     std::string user_name;
     std::string user_logo;
     std::string status;
+    std::string address;
+    std::string express;
 };
 
 
@@ -212,6 +216,16 @@ public:
     // *location: /update_status
     // *method: POST
     bool proc_update_status(const std::string& ssid, int id, const std::string& status);
+
+
+    // *location: /update_address
+    // *method: POST
+    bool proc_update_address(const std::string& ssid, const std::string& order_id, const std::string& name, const std::string& spec, const std::string& address);
+
+    // *location: /update_express
+    // *method: POST
+    bool proc_update_express(const std::string& ssid, int id, const std::string& express);
+
 };
 
 

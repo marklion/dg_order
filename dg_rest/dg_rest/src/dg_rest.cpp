@@ -182,6 +182,8 @@ std::vector<dg_self_good> dg_rest::proc_my_order_get(const std::string& order_id
                 p_exist->picture = good_info->m_picture;
                 p_exist->number = 0;
                 p_exist->status = _good.m_status;
+                Base64::Encode(_good.m_address, &(p_exist->address));
+                p_exist->express = _good.m_express;
             }
             p_exist->number++;
 
@@ -390,6 +392,8 @@ std::vector<dg_all_goods_order> dg_rest::proc_all_goods(const std::string& order
                 single_good.update_record();
             }
             order.status = single_good.m_status;
+            Base64::Encode(single_good.m_address, &(order.address));
+            order.express = single_good.m_express;
             ret.push_back(order);
         }
     }
@@ -412,6 +416,56 @@ bool dg_rest::proc_update_status(const std::string& ssid, int id, const std::str
             {
                 good_record->m_status = status;
                 ret = good_record->update_record();
+            }
+        }
+    }
+
+    return ret;
+}
+
+bool dg_rest::proc_update_address(const std::string& ssid, const std::string& order_id, const std::string& name, const std::string& spec, const std::string& address)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    std::string my_name;
+    std::string my_spec;
+    
+    Base64::Decode(name, &my_name);
+    Base64::Decode(spec, &my_spec);
+
+    auto good_info = sqlite_orm::search_record<dg_db_good_info>(DG_DB_FILE, "name = '%s'", my_name.c_str());
+    if (opt_user && good_info)
+    {
+        auto goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %s AND user_id = %d AND good_id = %d AND spec = '%s'", order_id.c_str(), opt_user->get_pri_id(), good_info->get_pri_id(), my_spec.c_str());
+        for (auto &itr:goods)
+        {
+            Base64::Decode(address, &(itr.m_address));
+            ret = itr.update_record();
+        }
+    }
+
+    return ret;
+}
+
+bool dg_rest::proc_update_express(const std::string& ssid, int id, const std::string& express)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    auto good_record = dg_get_order_good(id);
+    if (opt_user && good_record)
+    {
+        auto order_brief = dg_get_order(std::to_string(good_record->m_order_id));
+        if (order_brief && opt_user->get_pri_id() == order_brief->m_owner_user_id)
+        {
+            auto likely_goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %d AND good_id = %d AND spec = '%s' AND status = '%s' AND express = '%s'",
+                                                        good_record->m_order_id, good_record->m_good_id, good_record->m_spec.c_str(), good_record->m_status.c_str(), good_record->m_express.c_str());
+            for (auto &itr:likely_goods)
+            {
+                itr.m_express = express;
+                itr.m_status = "delivered";
+                ret = itr.update_record();
             }
         }
     }

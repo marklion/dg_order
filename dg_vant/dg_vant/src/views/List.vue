@@ -29,7 +29,7 @@
                                     <div class="spec_show">{{good.spec}}</div>
                                 </van-col>
                                 <van-col :span="12">
-                                    <change-status :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
+                                    <change-status :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
                                 </van-col>
                             </van-row>
                         </div>
@@ -57,7 +57,7 @@
                             </template>
                             <template #num>
                                 <div class="status_show"></div>
-                                <change-status :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
+                                <change-status :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
                             </template>
                         </van-card>
                     </div>
@@ -246,6 +246,8 @@ export default {
                         user_name: element.user_name.fromBase64(),
                         user_logo: vue_this.$remote_url + element.user_logo,
                         status: element.status,
+                        address:element.address.fromBase64(),
+                        express:element.express,
                     });
                 });
                 console.log(vue_this.all_goods);

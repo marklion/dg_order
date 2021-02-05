@@ -25,6 +25,9 @@
         <van-card :num="good.number" :title="good.name" @click-thumb="zoom_picture(good.picture)">
             <template #desc>
                 <div class="spec_status_show" v-text="good.spec + '-->' + status_show_str(good.status)"></div>
+                <div class="spec_status_show" v-if="good.status == 'delivered'">
+                    快递单号：{{good.express}}
+                </div>
             </template>
             <template #title>
                 <div class="good_name_show">
@@ -37,6 +40,9 @@
                         <van-image src="http://www.d8sis.cn/logo_res/no_pic.jpg"></van-image>
                     </template>
                 </van-image>
+            </template>
+            <template #price>
+                <div class="address_show" @click="open_address_choose(good)" v-text="address_show(good.address)"></div>
             </template>
 
         </van-card>
@@ -68,23 +74,32 @@ import {
     Base64
 } from 'js-base64'
 import SpecSelector from '../components/SpecSelector.vue'
+import wx from 'weixin-js-sdk'
 export default {
     name: 'MyGoods',
     data: function () {
         return {
-            status_show_str:function(_status) {
+            address_show: function (_address) {
+                var ret = '点击选择收货地址';
+                if (_address != '') {
+                    ret = _address
+                }
+
+                return ret;
+            },
+            status_show_str: function (_status) {
                 var ret = '预定';
 
                 switch (_status) {
                     case 'booking':
                         ret = '预定';
                         break;
-                    case 'bought' :
+                    case 'bought':
                         ret = '已购买'
-                        break; 
-                    case 'delivered' :
+                        break;
+                    case 'delivered':
                         ret = '已发货'
-                        break; 
+                        break;
                     default:
                         break;
                 }
@@ -128,12 +143,39 @@ export default {
                 }
             },
             goods: [],
+            is_ready: false,
         };
     },
     components: {
         'specs-selector': SpecSelector
     },
     methods: {
+        open_address_choose: function (_good) {
+            var vue_this = this;
+            Base64.extendString();
+            wx.openAddress({
+                success: function (res) {
+                    var final_addr = '';
+                    final_addr = res.provinceName + ' ';
+                    final_addr += res.cityName + '';
+                    final_addr += res.detailInfo + '\r\n';
+                    final_addr += res.userName + ' ' + res.telNumber;
+                    console.log(final_addr);
+                    vue_this.$axios.post(vue_this.$remote_rest_url_header + 'update_address', {
+                        ssid: vue_this.$cookies.get('ssid'),
+                        order_id: vue_this.get_order_number(),
+                        name: _good.name.toBase64(),
+                        spec: _good.spec.toBase64(),
+                        address: final_addr.toBase64(),
+                    }).then(function (resp) {
+                        vue_this.refresh_good_show();
+                        console.log(resp);
+                    }).catch(function (err) {
+                        console.log(err);
+                    });
+                }
+            });
+        },
         zoom_picture: function (_picture) {
             this.show_good_img_content = _picture;
             this.show_good_img = true;
@@ -218,6 +260,17 @@ export default {
                 window.location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa390f8b6f68e9c6d&redirect_uri=http%3a%2f%2fwww.d8sis.cn%2fwechatlogin&response_type=code&scope=snsapi_userinfo&state=%2fmy_goods%2f" + vue_this.order_number + "#wechat_redirect"
             });
         },
+        randomString: function (len) {
+            len = len || 32;
+            var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678'; /****默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/
+            var maxPos = $chars.length;
+            var pwd = '';
+            for (var i = 0; i < len; i++) {
+                pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
+            }
+            return pwd;
+        },
+
         refresh_good_show: function () {
             Base64.extendString();
             var vue_this = this;
@@ -234,6 +287,8 @@ export default {
                         spec: element.spec.fromBase64(),
                         number: element.number,
                         status: element.status,
+                        address: element.address.fromBase64(),
+                        express: element.express,
                     });
                 });
             }).catch(function (err) {
@@ -260,6 +315,41 @@ export default {
         this.get_user_info();
         this.refresh_good_show();
     },
+    mounted: function () {
+        this.$toast.loading({
+            message: '正在打开',
+            forbidClick: true,
+            duration: 3000,
+        });
+        var vue_this = this;
+        var timestamp = (new Date()).getTime();
+        var nonceStr = this.randomString(32);
+        this.$axios.post(this.$remote_rest_url_header + 'dg_wx_sign', {
+            timestamp: timestamp,
+            nonceStr: nonceStr,
+            url: window.location.href,
+        }).then(function (resp) {
+            wx.config({
+                debug: false,
+                appId: 'wxa390f8b6f68e9c6d',
+                timestamp: timestamp,
+                nonceStr: nonceStr,
+                signature: resp.data.result,
+                jsApiList: ['OpenAddress']
+            });
+            wx.ready(function () {
+                console.log('success to config wx');
+                vue_this.is_ready = true;
+                vue_this.$toast.clear();
+            });
+            wx.error(function (err) {
+                console.log('fail to config wx');
+                console.log(err);
+            });
+        }).catch(function (err) {
+            console.log(err);
+        });
+    }
 }
 </script>
 
@@ -282,8 +372,14 @@ export default {
     font-size: 20px;
     font-weight: bold;
 }
+
 .spec_status_show {
     font-size: 14px;
     color: red;
+}
+
+.address_show {
+    background-color: rgb(209, 209, 209);
+    color: rgb(18, 126, 67);
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-<div class="dg_order_good_show" v-if="should_show">
+<div class="dg_order_good_show" v-if="is_login">
     <van-nav-bar :title="order_brief.order_owner_name + order_brief.destination + '代购'" :fixed="true" :safe-area-inset-top="true">
         <template #left>
             <van-image :src="order_brief.order_owner_logo" height="45" width="45" round></van-image>
