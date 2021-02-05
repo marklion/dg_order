@@ -1,3 +1,4 @@
 build/
 dg_deliver.tar.gz
 install.sh
+.vscode/
