@@ -42,6 +42,26 @@ static size_t dg_proc_curl(void *ptr, size_t size, size_t nmemb, void *user_data
     return size * nmemb;
 }
 
+static std::string dg_rest_post(const std::string &_url, const std::string &_json)
+{
+    std::string in_buff;
+    auto curlhandle = curl_easy_init();
+    if (nullptr != curlhandle)
+    {
+        curl_easy_setopt(curlhandle, CURLOPT_URL, _url.c_str());
+        curl_easy_setopt(curlhandle, CURLOPT_WRITEDATA, &in_buff);
+        curl_easy_setopt(curlhandle, CURLOPT_WRITEFUNCTION, dg_proc_curl);
+        // 设置post提交方式
+        curl_easy_setopt(curlhandle, CURLOPT_POST, 1);
+        // 设置post的数据
+        curl_easy_setopt(curlhandle, CURLOPT_POSTFIELDS, _json.c_str());
+        curl_easy_perform(curlhandle);
+        curl_easy_cleanup(curlhandle);
+    }
+
+    return in_buff;
+}
+
 static std::string dg_rest_req(const std::string &_req)
 {
     std::string in_buff;
@@ -481,4 +501,67 @@ void dg_get_self_good_by_order_id_and_name_and_spec(const std::string &_order_id
 std::unique_ptr<dg_db_goods> dg_get_order_good(int _priv_id)
 {
     return sqlite_orm::search_record<dg_db_goods>(DG_DB_FILE, "PRI_ID = %d", _priv_id);
+}
+
+void send_out_sub_msg(int _my_good_id, const std::string &_touser, const std::string &_name, const std::string &_price, const std::string &_status, const std::string &_express)
+{
+    neb::CJsonObject msg_json;
+
+    msg_json.Add("touser", _touser);
+    msg_json.Add("template_id", "IIQyzBY8hAScYSFPmGQ1bjbVyOtlApgTsTGWtMZDBHs");
+    msg_json.Add("url", std::string("http://www.d8sis.cn/my_goods/") + std::to_string(_my_good_id));
+    
+    neb::CJsonObject msg_data;
+    neb::CJsonObject data_value;
+    data_value.Add("value", "");
+
+    data_value.Replace("value", std::to_string(_my_good_id));
+    msg_data.Add("first", data_value);
+
+    std::map<std::string, std::string> status_ch_map;
+    status_ch_map["booking"] = "预定中";
+    status_ch_map["bought"] = "已购买";
+    status_ch_map["delivered"] = "已发货";
+
+    data_value.Replace("value", status_ch_map[_status]);
+    msg_data.Add("keyword1", data_value);
+
+    data_value.Replace("value", _name);
+    msg_data.Add("keyword2", data_value);
+
+    data_value.Replace("value", _price);
+    msg_data.Add("remark", data_value);
+
+    msg_json.Add("data", msg_data);
+
+    auto post_ret = dg_rest_post(std::string("https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=") + g_acc_tok.get_content(), msg_json.ToString());
+    g_log.log("send sub post:%s to wx and get resutl:%s", msg_json.ToString().c_str(), post_ret.c_str());
+}
+
+bool dg_get_sub_status_from_wx(const std::string &_ssid)
+{
+    bool ret = false;
+
+    auto puser = get_online_user_info(_ssid);
+    if (puser)
+    {
+        auto result = dg_rest_req("https://api.weixin.qq.com/cgi-bin/user/info?access_token=" + g_acc_tok.get_content() + "&openid=" + puser->m_openid + "&lang=zh_CN");
+        neb::CJsonObject res_json(result);
+        if (res_json.KeyExist("errcode"))
+        {
+            g_log.err("failed to get user info from wechat:%s", res_json("errmsg").c_str());
+        }
+        else
+        {
+            int sub_status;
+            res_json.Get("subscribe", sub_status);
+            if (0 != sub_status)
+            {
+                ret = true;
+            }
+        }
+        
+    }
+
+    return ret;
 }

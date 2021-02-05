@@ -7,15 +7,21 @@
 #include "../../../public.h"
 #include "../../../dg_data_base/dg_data_opt.h"
 #include <map>
+#include <thread>
 
 static tdf_log g_log("dg_rest");
 
-std::string dg_rest::proc_wechat_login(const std::string& code)
+void dg_rest::proc_wechat_login_async(const std::string& code, ngrest::Callback<const std::string&>& callback)
 {
     g_log.log("recv rest req: wechat_login, code: %s", code.c_str());
-    auto ret = dg_wechat_login(code);
+
+    std::thread([&callback, code]{
+        auto ret = dg_wechat_login(code);
+        ngrest::Handler::post([&callback, ret]{
+            callback.success(ret);
+        });
+    }).detach();
     
-    return ret;
 }
 
 
@@ -401,6 +407,8 @@ std::vector<dg_all_goods_order> dg_rest::proc_all_goods(const std::string& order
     return ret;
 }
 
+
+
 bool dg_rest::proc_update_status(const std::string& ssid, int id, const std::string& status)
 {
     bool ret = false;
@@ -414,8 +422,17 @@ bool dg_rest::proc_update_status(const std::string& ssid, int id, const std::str
             auto order = dg_get_order(std::to_string( good_record->m_order_id));
             if (order && order->m_owner_user_id == opt_user->get_pri_id())
             {
-                good_record->m_status = status;
-                ret = good_record->update_record();
+                if (good_record->m_status != status)
+                {
+                    good_record->m_status = status;
+                    ret = good_record->update_record();
+                    if (true == ret)
+                    {
+                        auto to_user = get_user_info(good_record->m_user_id);
+                        auto good_info = dg_get_good_info(good_record->m_good_id);
+                        send_out_sub_msg(order->get_pri_id(), to_user->m_openid, good_info->m_name, "10元", status, good_record->m_express);
+                    }
+                }
             }
         }
     }
@@ -464,11 +481,21 @@ bool dg_rest::proc_update_express(const std::string& ssid, int id, const std::st
             for (auto &itr:likely_goods)
             {
                 itr.m_express = express;
-                itr.m_status = "delivered";
                 ret = itr.update_record();
+                proc_update_status(ssid, id, "delivered");
             }
         }
     }
 
     return ret;
+}
+
+void dg_rest::proc_get_sub_status(const std::string& ssid, ngrest::Callback<bool>& callback)
+{
+    std::thread([&callback, ssid]{
+        auto ret = dg_get_sub_status_from_wx(ssid);
+        ngrest::Handler::post([&callback, ret]{
+            callback.success(ret);
+        });
+    }).detach();
 }

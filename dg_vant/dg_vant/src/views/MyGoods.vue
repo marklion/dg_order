@@ -20,6 +20,8 @@
     </van-row>
     <van-notice-bar left-icon="volume-o" :text="order_brief.comments" />
     <van-divider>左滑修改规格或删除</van-divider>
+    <van-button block size="small" type="info" round v-if="!sub_status" :url="'https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjIwMTA0Mw==&scene=124#wechat_redirect'">关注公众号,获取订单状态通知</van-button>
+    <br>
     <van-button icon="exchange" type="warning" round :url="'/dg_order/' + get_order_number()" block size="small">查看全部</van-button>
     <van-swipe-cell v-for="(good, index) in goods" :key="index">
         <van-card :num="good.number" :title="good.name" @click-thumb="zoom_picture(good.picture)">
@@ -128,6 +130,7 @@ export default {
                 deliver_time: '',
                 comments: ''
             },
+            sub_status:false,
             status: function () {
                 var cur_date = new Date();
                 var start_time_str = this.order_brief.start_time.split('-').join('/');
@@ -294,7 +297,15 @@ export default {
             }).catch(function (err) {
                 console.log(err);
             });
-
+        },
+        get_sub_status:function() {
+            var vue_this = this;
+            vue_this.$axios.get(this.$remote_rest_url_header + "sub_status/" + this.$cookies.get('ssid')).then(function(resp) {
+                console.log(resp);
+                vue_this.sub_status = resp.data.result;
+            }).catch(function(err) {
+                console.log(err);
+            });
         }
     },
     beforeMount: function () {
@@ -314,6 +325,7 @@ export default {
         });
         this.get_user_info();
         this.refresh_good_show();
+        this.get_sub_status();
     },
     mounted: function () {
         this.$toast.loading({
@@ -335,7 +347,8 @@ export default {
                 timestamp: timestamp,
                 nonceStr: nonceStr,
                 signature: resp.data.result,
-                jsApiList: ['OpenAddress']
+                jsApiList: ['OpenAddress'],
+                openTagList: ['wx-open-subscribe'],
             });
             wx.ready(function () {
                 console.log('success to config wx');

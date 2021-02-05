@@ -31,4 +31,4 @@ set_target_properties(dg_rest PROPERTIES
 
 find_library(DG_DATA_BASE libdg_data_base.so ${PRJ_INTERNAL_BUILD}/lib)
 find_library(SQLITE_ORM_LIB libsqlite_orm.so ${PRJ_INTERNAL_BUILD}/lib)
-target_link_libraries(dg_rest ngrestutils ngrestcommon ngrestjson ngrestengine $ENV{NGREST_EXT_LIBS} uuid ${DG_DATA_BASE} ${SQLITE_ORM_LIB} curl)
+target_link_libraries(dg_rest ngrestutils ngrestcommon ngrestjson ngrestengine $ENV{NGREST_EXT_LIBS} uuid ${DG_DATA_BASE} ${SQLITE_ORM_LIB} curl pthread)

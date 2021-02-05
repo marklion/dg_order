@@ -413,16 +413,62 @@ export default {
             }
             return pwd;
         },
-        get_host_user:function() {
+        get_host_user: function () {
             var vue_this = this;
             vue_this.$axios.post(vue_this.$remote_rest_url_header + 'host_of', {
                 ssid: vue_this.$cookies.get('ssid'),
                 order_id: vue_this.get_order_number(),
             }).then(function (resp) {
-                if (resp.data.result)
-                {
+                if (resp.data.result) {
                     vue_this.user_is_host = true;
                 }
+            }).catch(function (err) {
+                console.log(err);
+            });
+        },
+        config_with_wx: function () {
+            var timestamp = (new Date()).getTime();
+            var nonceStr = this.randomString(32);
+            var vue_this = this;
+            this.$axios.post(this.$remote_rest_url_header + 'dg_wx_sign', {
+                timestamp: timestamp,
+                nonceStr: nonceStr,
+                url: window.location.href,
+            }).then(function (resp) {
+                wx.config({
+                    debug: false,
+                    appId: 'wxa390f8b6f68e9c6d',
+                    timestamp: timestamp,
+                    nonceStr: nonceStr,
+                    signature: resp.data.result,
+                    jsApiList: ['updateAppMessageShareData', 'chooseImage', 'uploadImage', 'getLocalImgData', 'updateTimelineShareData']
+                });
+                wx.ready(function () {
+                    console.log('success to config wx');
+                    wx.updateAppMessageShareData({
+                        title: vue_this.order_brief.order_owner_name + '的代购清单',
+                        desc: '点击链接参与代购',
+                        link: window.location.href,
+                        imgUrl: vue_this.order_brief.order_owner_logo,
+                        success: function () {
+                            console.log('success to set share btn');
+                        }
+                    });
+                    wx.updateTimelineShareData({
+                        title: vue_this.order_brief.order_owner_name + '的代购清单',
+                        link: window.location.href,
+                        imgUrl: vue_this.order_brief.order_owner_logo,
+                        success: function () {
+                            console.log('success to set share btn');
+                        }
+                    });
+                    vue_this.is_ready = true;
+                    vue_this.$toast.clear();
+                });
+                wx.error(function (err) {
+                    console.log('fail to config wx');
+                    console.log(err);
+                });
             }).catch(function (err) {
                 console.log(err);
             });
@@ -446,59 +492,14 @@ export default {
             vue_this.order_brief.comments = resp.data.result.info.comments.fromBase64();
             vue_this.order_brief.order_owner_name = resp.data.result.order_owner_name.fromBase64();
             vue_this.order_brief.order_owner_logo = vue_this.$remote_url + resp.data.result.order_owner_logo;
+            vue_this.config_with_wx();
         }).catch(function (err) {
             console.log(err);
         });
         this.get_user_info();
         this.refresh_goods();
     },
-    mounted: function () {
-        var timestamp = (new Date()).getTime();
-        var nonceStr = this.randomString(32);
-        var vue_this = this;
-        this.$axios.post(this.$remote_rest_url_header + 'dg_wx_sign', {
-            timestamp: timestamp,
-            nonceStr: nonceStr,
-            url: window.location.href,
-        }).then(function (resp) {
-            wx.config({
-                debug: false,
-                appId: 'wxa390f8b6f68e9c6d',
-                timestamp: timestamp,
-                nonceStr: nonceStr,
-                signature: resp.data.result,
-                jsApiList: ['updateAppMessageShareData', 'chooseImage', 'uploadImage', 'getLocalImgData', 'updateTimelineShareData']
-            });
-            wx.ready(function () {
-                console.log('success to config wx');
-                wx.updateAppMessageShareData({
-                    title: vue_this.order_brief.order_owner_name + '的代购清单',
-                    desc: '点击链接参与代购',
-                    link: window.location.href,
-                    imgUrl: vue_this.order_brief.order_owner_logo,
-                    success: function () {
-                        console.log('success to set share btn');
-                    }
-                });
-                wx.updateTimelineShareData({
-                    title: vue_this.order_brief.order_owner_name + '的代购清单',
-                    link: window.location.href,
-                    imgUrl: vue_this.order_brief.order_owner_logo,
-                    success: function () {
-                        console.log('success to set share btn');
-                    }
-                });
-                vue_this.is_ready = true;
-                vue_this.$toast.clear();
-            });
-            wx.error(function (err) {
-                console.log('fail to config wx');
-                console.log(err);
-            });
-        }).catch(function (err) {
-            console.log(err);
-        });
-    },
+
 }
 </script>
 

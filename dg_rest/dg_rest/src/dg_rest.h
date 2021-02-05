@@ -5,6 +5,8 @@
 #define DG_REST_H
 
 #include <ngrest/common/Service.h>
+#include <ngrest/common/Callback.h>
+#include <ngrest/engine/Handler.h>
 #include <vector>
 
 
@@ -149,7 +151,7 @@ public:
 
     // *location: /wechat_login
     // *method: POST
-    std::string proc_wechat_login(const std::string& code);
+    void proc_wechat_login_async(const std::string& code, ngrest::Callback<const std::string&>& callback);
 
     // *location: /dg_order
     // *method: POST
@@ -226,6 +228,9 @@ public:
     // *method: POST
     bool proc_update_express(const std::string& ssid, int id, const std::string& express);
 
+    // *location: /sub_status/{ssid}
+    // *method: GET
+    void proc_get_sub_status(const std::string& ssid, ngrest::Callback<bool>& callback);
 };
 
 

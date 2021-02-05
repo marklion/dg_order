@@ -98,7 +98,7 @@ public:
     {
         va_list vl;
         va_start(vl, _log);
-        char tmpbuff[256];
+        char tmpbuff[2048];
         vsnprintf(tmpbuff, sizeof(tmpbuff), _log, vl);
         va_end(vl);
         output_2_fd(tmpbuff, m_log_stdout);
@@ -121,7 +121,7 @@ public:
     {
         va_list vl;
         va_start(vl, _log);
-        char tmpbuff[256];
+        char tmpbuff[2048];
         vsnprintf(tmpbuff, sizeof(tmpbuff), _log, vl);
         va_end(vl);
         output_2_fd(tmpbuff, m_log_stderr);

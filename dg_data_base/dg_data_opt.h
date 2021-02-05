@@ -29,4 +29,7 @@ const std::string dg_wx_sign(const std::string& nonceStr, long timestamp, const 
 std::unique_ptr<dg_db_goods> dg_get_order_good(int _order_id, int _user_id, const std::string &_name, const std::string &_spec);
 std::unique_ptr<dg_db_goods> dg_get_order_good(int _priv_id);
 
+void send_out_sub_msg(int _my_good_id, const std::string &_touser,  const std::string &_name, const std::string &_price, const std::string &_status, const std::string &_express);
+bool dg_get_sub_status_from_wx(const std::string &_ssid);
+
 #endif // _DG_DATA_OPT_H
