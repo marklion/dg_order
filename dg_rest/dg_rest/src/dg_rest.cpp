@@ -425,6 +425,10 @@ bool dg_rest::proc_update_status(const std::string& ssid, int id, const std::str
                 if (good_record->m_status != status)
                 {
                     good_record->m_status = status;
+                    if (good_record->m_status != "delivered")
+                    {
+                        good_record->m_express = "";
+                    }
                     ret = good_record->update_record();
                     if (true == ret)
                     {
