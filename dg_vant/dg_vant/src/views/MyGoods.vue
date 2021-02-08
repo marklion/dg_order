@@ -20,7 +20,7 @@
     </van-row>
     <van-notice-bar left-icon="volume-o" :text="order_brief.comments" />
     <van-divider>左滑修改规格或删除</van-divider>
-    <van-button block size="small" type="info" round v-if="!sub_status" :url="'https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjIwMTA0Mw==&scene=124#wechat_redirect'">关注公众号,获取订单状态通知</van-button>
+    <van-button block size="small" type="info" round v-if="!sub_status" @click="show_sub_qr">关注公众号,获取订单状态通知</van-button>
     <br>
     <van-button icon="exchange" type="warning" round :url="'/dg_order/' + get_order_number()" block size="small">查看全部</van-button>
     <van-swipe-cell v-for="(good, index) in goods" :key="index">
@@ -76,6 +76,7 @@ import {
     Base64
 } from 'js-base64'
 import SpecSelector from '../components/SpecSelector.vue'
+import { ImagePreview } from 'vant';
 import wx from 'weixin-js-sdk'
 export default {
     name: 'MyGoods',
@@ -153,6 +154,9 @@ export default {
         'specs-selector': SpecSelector
     },
     methods: {
+        show_sub_qr:function() {
+            ImagePreview(['http://www.d8sis.cn/logo_res/sub_qr.png']);
+        },
         open_address_choose: function (_good) {
             var vue_this = this;
             Base64.extendString();
