@@ -12,6 +12,16 @@ extern bool execute_sql_cmd(const std::string& _sql_cmd, const std::string& _sql
     auto sql_ret = sqlite3_open(_sql_file.c_str(), &db);
     if (sql_ret == 0 && nullptr != db)
     {
+        sqlite3_busy_handler(db, [](void *_priv, int _count)->int{
+            usleep(10000);
+            if (_count>20)
+            {
+                g_log.err("max retry times arrived: %s", _priv);
+                return 0;
+            }
+            g_log.log("retry sql :%s for %d times", _priv, _count);
+            return 1;
+        }, (void*)(_sql_cmd.c_str()));
         char *errmsg = nullptr;
         if (0 == sqlite3_exec(db, _sql_cmd.c_str(), [](void *_pQA, int argc, char **argv, char **_col) -> int {
             auto pOut = static_cast<std::vector<std::map<std::string, std::string>> *>(_pQA);
