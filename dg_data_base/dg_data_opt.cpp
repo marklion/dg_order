@@ -503,6 +503,21 @@ std::unique_ptr<dg_db_goods> dg_get_order_good(int _priv_id)
     return sqlite_orm::search_record<dg_db_goods>(DG_DB_FILE, "PRI_ID = %d", _priv_id);
 }
 
+static std::string make_cur_time_string()
+{
+    auto sec = time(NULL);
+    struct tm lt;
+
+    localtime_r(&sec, &lt);
+    std::string ret;
+
+    ret = std::to_string(lt.tm_year + 1900) + "-" + std::to_string(lt.tm_mon + 1) + "-" + std::to_string(lt.tm_mday);
+
+    g_log.log("excute at %s", ret.c_str());
+
+    return ret;
+}
+
 void send_out_sub_msg(int _my_good_id, const std::string &_touser, const std::string &_name, const std::string &_price, const std::string &_status, const std::string &_express)
 {
     neb::CJsonObject msg_json;
@@ -515,7 +530,8 @@ void send_out_sub_msg(int _my_good_id, const std::string &_touser, const std::st
     neb::CJsonObject data_value;
     data_value.Add("value", "");
 
-    data_value.Replace("value", std::to_string(_my_good_id));
+    std::string title = "您预订的 " + _name + " 状态已更新";
+    data_value.Replace("value", title);
     msg_data.Add("first", data_value);
 
     std::map<std::string, std::string> status_ch_map;
@@ -526,10 +542,10 @@ void send_out_sub_msg(int _my_good_id, const std::string &_touser, const std::st
     data_value.Replace("value", status_ch_map[_status]);
     msg_data.Add("keyword1", data_value);
 
-    data_value.Replace("value", _name);
+    data_value.Replace("value", make_cur_time_string());
     msg_data.Add("keyword2", data_value);
 
-    data_value.Replace("value", _price);
+    data_value.Replace("value", "更多信息请查看订单详情");
     msg_data.Add("remark", data_value);
 
     msg_json.Add("data", msg_data);

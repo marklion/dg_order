@@ -26,7 +26,7 @@ get_docker_image() {
 
 start_all_server() {
     line=`wc -l $0|awk '{print $1}'`
-    line=`expr $line - 80` 
+    line=`expr $line - 82` 
     tail -n $line $0 | tar zx  --skip-old-files -C /
     nginx -c /conf/nginx.conf
     /root/.ngrest/ngrest-build/deploy/bin/ngrestserver -s /lib &
@@ -39,6 +39,8 @@ start_docker_con() {
     local IMG_BED=`realpath $IMG_BED_INPUT`
     local CON_ID=`docker create -ti -p ${PORT}:80 -e WECHAT_SECRET="${WECHAT_SECRET_INPUT}"  -v ${DATA_BASE_PATH}:/database -v ${IMG_BED}:/dist/logo_res ${DOCKER_IMG_NAME} /root/install.sh`
     docker cp $0 ${CON_ID}:/root/
+    docker cp /etc/localtime ${CON_ID}:/etc/localtime
+    docker cp /etc/timezone ${CON_ID}:/etc/timezone
     docker start -ai ${CON_ID}
 }
 
