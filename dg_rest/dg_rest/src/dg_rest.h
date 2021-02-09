@@ -75,6 +75,8 @@ struct dg_self_good
     std::string status;
     std::string address;
     std::string express;
+    int price;
+    std::string pending;
 };
 
 struct dg_update_order_good_content {
@@ -126,6 +128,8 @@ struct dg_all_goods_order {
     std::string status;
     std::string address;
     std::string express;
+    std::string price;
+    std::string pending;
 };
 
 
@@ -233,6 +237,18 @@ public:
     // *location: /sub_status/{ssid}
     // *method: GET
     void proc_get_sub_status(const std::string& ssid, ngrest::Callback<bool>& callback);
+
+    // *location: /update_pending
+    // *method: POST
+    bool proc_update_pending(const std::string& ssid, int id, const std::string& pending);
+
+    // *location: /confirm_pending
+    // *method: POST
+    bool proc_confirm_pending(const std::string& ssid, const std::string& order_id, const std::string& name, const std::string& spec, const std::string& pending);
+
+    // *location: /update_price
+    // *method: POST
+    bool proc_update_price(const std::string& ssid, int id, const std::string& price);
 };
 
 

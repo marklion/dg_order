@@ -424,6 +424,17 @@ std::string dg_insert_goods(const std::string &_good_name, const std::string &_s
     good.m_user_id = _user_id;
     good.m_spec = _spec;
 
+    auto goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %d AND user_id = %d AND good_id = %d AND spec = '%s'", _order_id, _user_id, good.m_good_id, _spec.c_str());
+    for (auto &itr:goods)
+    {
+        if (itr.m_price.length() > 0)
+        {
+            good.m_price = itr.m_price;
+            good.m_pending = itr.m_pending;
+            break;
+        }
+    }
+
     if (good.insert_record())
     {
         ret = std::to_string(good.get_pri_id());
@@ -521,21 +532,40 @@ static std::string make_cur_time_string()
     return ret;
 }
 
-void send_out_sub_msg(int _my_good_id, const std::string &_touser, const std::string &_name, const std::string &_price, const std::string &_status, const std::string &_express)
+void send_out_sub_msg(int _my_good_id, const std::string &_touser,  const std::string &_name, const std::string &_status, const std::string &_remark, const std::string &_url )
 {
     neb::CJsonObject msg_json;
 
     msg_json.Add("touser", _touser);
     msg_json.Add("template_id", "IIQyzBY8hAScYSFPmGQ1bjbVyOtlApgTsTGWtMZDBHs");
-    msg_json.Add("url", std::string("http://www.d8sis.cn/my_goods/") + std::to_string(_my_good_id));
+    if (_url.length() == 0)
+    {
+        msg_json.Add("url", std::string("http://www.d8sis.cn/my_goods/") + std::to_string(_my_good_id));
+    }
+    else
+    {
+        msg_json.Add("url", _url);
+    }
+    
     
     neb::CJsonObject msg_data;
     neb::CJsonObject data_value;
     data_value.Add("value", "");
 
-    std::string title = "您预订的 " + _name + " 状态已更新";
-    data_value.Replace("value", title);
-    msg_data.Add("first", data_value);
+    auto order_brief = dg_get_order(std::to_string(_my_good_id));
+    auto dg_owner = get_user_info(order_brief->m_owner_user_id);
+    if (order_brief && dg_owner)
+    {
+        std::string order_description = dg_owner->m_name + "--" + order_brief->m_destination + "代购";
+        std::string title = "您好，您在 " + order_description + " 中的 " + _name + " 状态已更新";
+        data_value.Replace("value", title);
+        msg_data.Add("first", data_value);
+    }
+    else
+    {
+        return;
+    }
+    
 
     std::map<std::string, std::string> status_ch_map;
     status_ch_map["booking"] = "预定中";
@@ -548,7 +578,15 @@ void send_out_sub_msg(int _my_good_id, const std::string &_touser, const std::st
     data_value.Replace("value", make_cur_time_string());
     msg_data.Add("keyword2", data_value);
 
-    data_value.Replace("value", "更多信息请查看订单详情");
+    if (_remark.length() == 0)
+    {
+        data_value.Replace("value", "更多信息请查看订单详情");
+    }
+    else
+    {
+        data_value.Replace("value", _remark);
+    }
+    
     msg_data.Add("remark", data_value);
 
     msg_json.Add("data", msg_data);

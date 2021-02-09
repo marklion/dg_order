@@ -29,7 +29,7 @@
                                     <div class="spec_show">{{good.spec}}</div>
                                 </van-col>
                                 <van-col :span="12">
-                                    <change-status :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
+                                    <change-status :price="good.price" :pending="good.pending" @set_price="handle_price_set" :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
                                 </van-col>
                             </van-row>
                         </div>
@@ -57,7 +57,7 @@
                             </template>
                             <template #num>
                                 <div class="status_show"></div>
-                                <change-status :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
+                                <change-status :price="good.price" :pending="good.pending" @set_price="handle_price_set" :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
                             </template>
                         </van-card>
                     </div>
@@ -82,11 +82,22 @@ export default {
     data: function () {
         return {
             cur_filter: 'all',
-            filter_options: [
-                {text:'全部', value:'all'},
-                {text:'未购买', value:'booking'},
-                {text:'已购买', value:'bought'},
-                {text:'已发货', value:'delivered'},
+            filter_options: [{
+                    text: '全部',
+                    value: 'all'
+                },
+                {
+                    text: '未购买',
+                    value: 'booking'
+                },
+                {
+                    text: '已购买',
+                    value: 'bought'
+                },
+                {
+                    text: '已发货',
+                    value: 'delivered'
+                },
             ],
             good_buyer: 0,
             sort_by: 0,
@@ -118,16 +129,12 @@ export default {
 
                 return ret;
             },
-            status_in_filter:function(_status, _cur_filter) {
+            status_in_filter: function (_status, _cur_filter) {
                 var ret = false;
-                if ('all' == this.cur_filter)
-                {
+                if ('all' == this.cur_filter) {
                     ret = true;
-                }
-                else
-                {
-                    if (_status == _cur_filter)
-                    {
+                } else {
+                    if (_status == _cur_filter) {
                         ret = true;
                     }
                 }
@@ -215,6 +222,32 @@ export default {
         };
     },
     methods: {
+        handle_price_set: function (_ps) {
+            console.log(_ps);
+            var vue_this = this;
+            this.$axios.post(this.$remote_rest_url_header + 'update_pending', {
+                ssid: this.$cookies.get('ssid'),
+                id: _ps.id,
+                pending: 'pending'
+            }).then(function (resp) {
+                if (resp.data.result == true) {
+                    vue_this.get_all_goods();
+                }
+            }).catch(function (err) {
+                console.log(err);
+            });
+            this.$axios.post(this.$remote_rest_url_header + 'update_price', {
+                ssid: this.$cookies.get('ssid'),
+                id: _ps.id,
+                price:_ps.price,
+            }).then(function (resp) {
+                if (resp.data.result == true) {
+                    vue_this.get_all_goods();
+                }
+            }).catch(function (err) {
+                console.log(err);
+            });
+        },
         handle_change: function (_cs) {
             console.log(_cs);
             var vue_this = this;
@@ -246,8 +279,10 @@ export default {
                         user_name: element.user_name.fromBase64(),
                         user_logo: vue_this.$remote_url + element.user_logo,
                         status: element.status,
-                        address:element.address.fromBase64(),
-                        express:element.express,
+                        address: element.address.fromBase64(),
+                        express: element.express,
+                        price: element.price,
+                        pending: element.pending,
                     });
                 });
                 console.log(vue_this.all_goods);

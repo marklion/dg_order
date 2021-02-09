@@ -84,6 +84,8 @@ public:
     std::string m_status = "booking";
     std::string m_address;
     std::string m_express;
+    std::string m_price;
+    std::string m_pending = "pending";
     dg_db_goods(const std::string &_sql_file):sqlite_orm(_sql_file) {}
 
     std::vector<sqlite_orm_column> columns_defined() {
@@ -96,6 +98,8 @@ public:
         ret.push_back(sqlite_orm_column("status", sqlite_orm_column::STRING, &m_status));
         ret.push_back(sqlite_orm_column("address", sqlite_orm_column::STRING, &m_address));
         ret.push_back(sqlite_orm_column("express", sqlite_orm_column::STRING, &m_express));
+        ret.push_back(sqlite_orm_column("price", sqlite_orm_column::STRING, &m_price));
+        ret.push_back(sqlite_orm_column("pending", sqlite_orm_column::STRING, &m_pending));
 
         return ret;
     }

@@ -43,8 +43,14 @@
                     </template>
                 </van-image>
             </template>
+            <template #tags>
+                <van-tag plain type="primary" @click="open_address_choose(good)">{{address_show(good.address)}}</van-tag>
+            </template>
             <template #price>
-                <div class="address_show" @click="open_address_choose(good)" v-text="address_show(good.address)"></div>
+                <div>
+                    <span v-if="good.price != 0">¥{{good.price}}</span>
+                    <van-button round type="primary" size="mini" v-if="good.pending == 'pending'" @click="confirm_price(good)">确认价格</van-button>
+                </div>
             </template>
 
         </van-card>
@@ -76,7 +82,9 @@ import {
     Base64
 } from 'js-base64'
 import SpecSelector from '../components/SpecSelector.vue'
-import { ImagePreview } from 'vant';
+import {
+    ImagePreview
+} from 'vant';
 import wx from 'weixin-js-sdk'
 export default {
     name: 'MyGoods',
@@ -131,7 +139,7 @@ export default {
                 deliver_time: '',
                 comments: ''
             },
-            sub_status:false,
+            sub_status: false,
             status: function () {
                 var cur_date = new Date();
                 var start_time_str = this.order_brief.start_time.split('-').join('/');
@@ -154,7 +162,24 @@ export default {
         'specs-selector': SpecSelector
     },
     methods: {
-        show_sub_qr:function() {
+        confirm_price: function (_good) {
+            var vue_this = this;
+            vue_this.$axios.post(vue_this.$remote_rest_url_header + 'confirm_pending', {
+                ssid: vue_this.$cookies.get('ssid'),
+                order_id: vue_this.get_order_number(),
+                name:_good.name.toBase64(),
+                spec:_good.spec.toBase64(),
+                pending:'confirm',
+            }).then(function(resp) {
+                if (resp.data.result == true)
+                {
+                    vue_this.refresh_good_show();
+                }
+            }).catch(function(err) {
+                console.log(err);
+            });
+        },
+        show_sub_qr: function () {
             ImagePreview(['http://www.d8sis.cn/logo_res/sub_qr.png']);
         },
         open_address_choose: function (_good) {
@@ -296,18 +321,20 @@ export default {
                         status: element.status,
                         address: element.address.fromBase64(),
                         express: element.express,
+                        price: element.price,
+                        pending: element.pending,
                     });
                 });
             }).catch(function (err) {
                 console.log(err);
             });
         },
-        get_sub_status:function() {
+        get_sub_status: function () {
             var vue_this = this;
-            vue_this.$axios.get(this.$remote_rest_url_header + "sub_status/" + this.$cookies.get('ssid')).then(function(resp) {
+            vue_this.$axios.get(this.$remote_rest_url_header + "sub_status/" + this.$cookies.get('ssid')).then(function (resp) {
                 console.log(resp);
                 vue_this.sub_status = resp.data.result;
-            }).catch(function(err) {
+            }).catch(function (err) {
                 console.log(err);
             });
         }

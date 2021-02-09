@@ -191,8 +191,14 @@ std::vector<dg_self_good> dg_rest::proc_my_order_get(const std::string& order_id
                 p_exist->status = _good.m_status;
                 Base64::Encode(_good.m_address, &(p_exist->address));
                 p_exist->express = _good.m_express;
+                p_exist->pending = _good.m_pending;
+                p_exist->price = 0;
             }
             p_exist->number++;
+            if (_good.m_price.length() > 0)
+            {
+                p_exist->price += atoi(_good.m_price.c_str());
+            }
 
             return true;
         });
@@ -402,6 +408,8 @@ std::vector<dg_all_goods_order> dg_rest::proc_all_goods(const std::string& order
             order.status = single_good.m_status;
             Base64::Encode(single_good.m_address, &(order.address));
             order.express = single_good.m_express;
+            order.price = single_good.m_price;
+            order.pending = single_good.m_pending;
             ret.push_back(order);
         }
     }
@@ -436,7 +444,7 @@ bool dg_rest::proc_update_status(const std::string& ssid, int id, const std::str
                     {
                         auto to_user = get_user_info(good_record->m_user_id);
                         auto good_info = dg_get_good_info(good_record->m_good_id);
-                        send_out_sub_msg(order->get_pri_id(), to_user->m_openid, good_info->m_name, "10元", status, good_record->m_express);
+                        send_out_sub_msg(order->get_pri_id(), to_user->m_openid, good_info->m_name, status, "");
                     }
                 }
             }
@@ -504,4 +512,87 @@ void dg_rest::proc_get_sub_status(const std::string& ssid, ngrest::Callback<bool
             callback.success(ret);
         });
     }).detach();
+}
+
+bool dg_rest::proc_update_pending(const std::string& ssid, int id, const std::string& pending)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    auto order = dg_get_order_good(id);
+    if (order)
+    {
+        auto order_brief = dg_get_order(std::to_string( order->m_order_id));
+        if (opt_user && order_brief && opt_user->get_pri_id() == order_brief->m_owner_user_id)
+        {
+            auto good_info = dg_get_good_info(order->m_good_id);
+            auto goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %d AND user_id = %d AND good_id = %d AND spec = '%s'", order->m_order_id, order->m_user_id, good_info->get_pri_id(), order->m_spec.c_str());
+            for (auto &itr:goods)
+            {
+                itr.m_pending = pending;
+                ret = itr.update_record();
+            }
+        }
+    }
+
+    return ret;
+}
+
+bool dg_rest::proc_update_price(const std::string& ssid, int id, const std::string& price)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    auto order = dg_get_order_good(id);
+    if (order)
+    {
+        auto order_brief = dg_get_order(std::to_string( order->m_order_id));
+        if (opt_user && order_brief && opt_user->get_pri_id() == order_brief->m_owner_user_id)
+        {
+            auto good_info = dg_get_good_info(order->m_good_id);
+            auto goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %d AND user_id = %d AND good_id = %d AND spec = '%s'", order->m_order_id, order->m_user_id, good_info->get_pri_id(), order->m_spec.c_str());
+            int total_price = 0;
+            for (auto &itr : goods)
+            {
+                itr.m_price= price;
+                ret = itr.update_record();
+                total_price += atoi(price.c_str());
+            }
+            if (order->m_price != price)
+            {
+                std::string remark = "代购主设定了单价：" + price + "元, 总价：" + std::to_string(total_price) + "元  请点击详情确认";
+                send_out_sub_msg(order_brief->get_pri_id(), get_user_info(order->m_user_id)->m_openid, dg_get_good_info(order->m_good_id)->m_name + "(" + order->m_spec +  ")", order->m_status, remark);
+            }
+        }
+    }
+
+    return ret;
+
+}
+
+bool dg_rest::proc_confirm_pending(const std::string& ssid, const std::string& order_id, const std::string& name, const std::string& spec, const std::string& pending)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    std::string my_name;
+    std::string my_spec;
+    
+    Base64::Decode(name, &my_name);
+    Base64::Decode(spec, &my_spec);
+
+    auto good_info = sqlite_orm::search_record<dg_db_good_info>(DG_DB_FILE, "name = '%s'", my_name.c_str());
+    if (opt_user && good_info)
+    {
+        auto goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %s AND user_id = %d AND good_id = %d AND spec = '%s'", order_id.c_str(), opt_user->get_pri_id(), good_info->get_pri_id(), my_spec.c_str());
+        for (auto &itr:goods)
+        {
+            itr.m_pending = pending;
+            ret = itr.update_record();
+            std::string remark = opt_user->m_name + "确认了价格";
+            send_out_sub_msg(atoi(order_id.c_str()), get_user_info(itr.m_user_id)->m_openid, dg_get_good_info(itr.m_good_id)->m_name + "(" + itr.m_spec +  ")", itr.m_status, remark, std::string("http://www.d8sis.cn/list/") + order_id);
+        }
+    }
+
+    return ret;
 }
