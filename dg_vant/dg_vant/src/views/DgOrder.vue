@@ -167,7 +167,7 @@ export default {
                     },
                 });
             } else {
-                this.orig_create_order('');
+                this.origModifyOrder('');
             }
         },
 
@@ -189,7 +189,7 @@ export default {
             }).then(function (resp) {
                 console.log(resp);
                 vue_this.get_created_orders();
-                vue_this.$toast.close();
+                vue_this.$toast.clear();
             }).catch(function (err) {
                 console.log(err);
             });
