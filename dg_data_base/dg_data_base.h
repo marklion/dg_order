@@ -55,6 +55,7 @@ public:
     std::string m_start_time;
     std::string m_deliver_time;
     std::string m_comments;
+    std::string m_contact_qr;
     dg_db_order_owner(const std::string& _sql_file) : sqlite_orm(_sql_file) {}
 
     std::vector<sqlite_orm_column> columns_defined() {
@@ -65,6 +66,7 @@ public:
         ret.push_back(sqlite_orm_column("start_time", sqlite_orm_column::STRING, &m_start_time));
         ret.push_back(sqlite_orm_column("deliver_time", sqlite_orm_column::STRING, &m_deliver_time));
         ret.push_back(sqlite_orm_column("comments", sqlite_orm_column::STRING, &m_comments));
+        ret.push_back(sqlite_orm_column("contact_qr", sqlite_orm_column::STRING, &m_contact_qr));
 
         return ret;
     }

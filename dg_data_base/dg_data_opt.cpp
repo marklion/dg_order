@@ -244,7 +244,9 @@ std::unique_ptr<dg_db_user_info> get_user_info(int _user_info_id)
 {
     return sqlite_orm::search_record<dg_db_user_info>(DG_DB_FILE, _user_info_id);
 }
-std::string dg_create_order(int _user_id, const std::string& _destination, const std::string& _start_time, const std::string& _deliver_time, const std::string& _comments)
+
+
+std::string dg_create_order(int _user_id, const std::string& _destination, const std::string& _start_time, const std::string& _deliver_time, const std::string& _comments, const std::string &_contact_qr)
 {
     dg_db_order_owner db_record(DG_DB_FILE);
     std::string ret;
@@ -254,6 +256,7 @@ std::string dg_create_order(int _user_id, const std::string& _destination, const
     db_record.m_start_time = _start_time;
     db_record.m_deliver_time = _deliver_time;
     db_record.m_comments = _comments;
+    db_record.m_contact_qr = get_contact_qr_from_wx(_contact_qr);
 
     if (db_record.insert_record())
     {
@@ -580,4 +583,10 @@ bool dg_get_sub_status_from_wx(const std::string &_ssid)
     }
 
     return ret;
+}
+
+std::string get_contact_qr_from_wx(const std::string& _contact_qr)
+{
+    auto downlaod_img = dg_rest_req("https://api.weixin.qq.com/cgi-bin/media/get?access_token=" + g_acc_tok.get_content() + "&media_id=" + _contact_qr);
+    return dg_store_good_picture(downlaod_img, dg_gen_ssid());
 }

@@ -24,6 +24,7 @@ struct dg_order_info
     std::string start_time;
     std::string deliver_time;
     std::string comments;
+    std::string contact_qr;
 };
 
 struct dg_order_show 
@@ -112,6 +113,7 @@ struct dg_order_brief_change{
     std::string start_time;
     std::string deliver_time;
     std::string comments;
+    std::string contact_qr;
 };
 
 struct dg_all_goods_order {

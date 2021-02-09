@@ -11,7 +11,7 @@ std::unique_ptr<dg_db_user_info> get_user_info(const std::string& _openid);
 std::unique_ptr<dg_db_user_info> get_user_info(int _user_info_id);
 std::string dg_wechat_login(const std::string& _code);
 
-std::string dg_create_order(int _user_id, const std::string& _destination, const std::string& _start_time, const std::string& _deliver_time, const std::string& _commonts);
+std::string dg_create_order(int _user_id, const std::string& _destination, const std::string& _start_time, const std::string& _deliver_time, const std::string& _commonts, const std::string &_contact_qr);
 std::unique_ptr<dg_db_order_owner> dg_get_order(const std::string& _order_id);
 
 std::unique_ptr<dg_db_good_info> dg_get_good_info(int _good_id);
@@ -31,5 +31,7 @@ std::unique_ptr<dg_db_goods> dg_get_order_good(int _priv_id);
 
 void send_out_sub_msg(int _my_good_id, const std::string &_touser,  const std::string &_name, const std::string &_price, const std::string &_status, const std::string &_express);
 bool dg_get_sub_status_from_wx(const std::string &_ssid);
+
+std::string get_contact_qr_from_wx(const std::string& _contact_qr);
 
 #endif // _DG_DATA_OPT_H

@@ -40,6 +40,11 @@
         </van-col>
     </van-row>
     <van-notice-bar left-icon="volume-o" :text="order_brief.comments" />
+    <van-swipe :autoplay="3000">
+        <van-swipe-item v-for="(image, index) in ready_for_scroll()" :key="index">
+            <van-image class="" :src="image" fit="contain" height="200px"></van-image>
+        </van-swipe-item>
+    </van-swipe>
     <van-dialog title="预定详情" v-model="add_good_order_diag" :show-confirm-button="false" :show-cancel-button="true" :close-on-click-overlay="true">
         <van-form @submit="on_add_good">
             <van-field v-model="good_add_form.name" name="商品名称" label="商品名称" placeholder="商品名称" :rules="[{ required: true, message: '请填写商品名称' }]" />
@@ -170,7 +175,8 @@ export default {
                 destination: '',
                 start_time: '',
                 deliver_time: '',
-                comments: ''
+                comments: '',
+                contact_qr: '',
             },
             is_login: false,
             status: function () {
@@ -219,6 +225,26 @@ export default {
 
             should_show: function () {
                 return this.is_login && this.is_ready;
+            },
+            ready_for_scroll: function () {
+                var ret = [];
+                var first_3 = this.goods_from_server.slice(0);
+
+                first_3.sort((a, b) => {
+                    return b.total - a.total;
+                });
+
+                if (this.order_brief.contact_qr != '') {
+                    ret.push(this.order_brief.contact_qr)
+                }
+                if (first_3.length >= 1)
+                    ret.push(first_3[0].picture);
+                if (first_3.length >= 2)
+                    ret.push(first_3[1].picture);
+                if (first_3.length >= 3)
+                    ret.push(first_3[2].picture);
+
+                return ret;
             },
         };
     },
@@ -492,6 +518,9 @@ export default {
             vue_this.order_brief.comments = resp.data.result.info.comments.fromBase64();
             vue_this.order_brief.order_owner_name = resp.data.result.order_owner_name.fromBase64();
             vue_this.order_brief.order_owner_logo = vue_this.$remote_url + resp.data.result.order_owner_logo;
+            if (resp.data.result.info.contact_qr != '') {
+                vue_this.order_brief.contact_qr = vue_this.$remote_url + resp.data.result.info.contact_qr;
+            }
             vue_this.config_with_wx();
         }).catch(function (err) {
             console.log(err);

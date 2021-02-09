@@ -63,7 +63,7 @@ std::string dg_rest::proc_dg_order_create(const dg_order_config& order)
         Base64::Decode(order.info.destination, &dest);
         std::string comments;
         Base64::Decode(order.info.comments, &comments);
-        ret = dg_create_order(p_onlien_user->get_pri_id(), dest, order.info.start_time, order.info.deliver_time, comments);
+        ret = dg_create_order(p_onlien_user->get_pri_id(), dest, order.info.start_time, order.info.deliver_time, comments, order.info.contact_qr);
     }
 
     return ret;
@@ -88,6 +88,7 @@ dg_order_show dg_rest::proc_dg_get_order(const std::string& order_id)
             Base64::Encode(p_order_conf->m_comments, &(ret.info.comments));
             ret.info.deliver_time = p_order_conf->m_deliver_time;
             ret.info.start_time = p_order_conf->m_start_time;
+            ret.info.contact_qr = p_order_conf->m_contact_qr;
             ret.order_id = p_order_conf->get_pri_id();
         }
     }
@@ -347,6 +348,7 @@ std::string dg_rest::proc_order_brief_change(const std::string& ssid, const dg_o
             Base64::Decode(order_brief.destination, &(order_info->m_destination));
             order_info->m_start_time = order_brief.start_time;
             order_info->m_deliver_time = order_brief.deliver_time;
+            order_info->m_contact_qr = get_contact_qr_from_wx(order_brief.contact_qr);
             if (order_info->update_record())
             {
                 ret = "success";
