@@ -503,7 +503,7 @@ std::unique_ptr<dg_db_goods> dg_get_order_good(int _order_id, int _user_id, cons
 void dg_get_self_good_by_order_id_and_name_and_spec(const std::string &_order_id, int _user_id, const std::string &_name, const std::string &_spec, std::function<bool (dg_db_goods &)> const &f)
 {
     auto good_id = dg_fetch_good_info(_name, "");
-    auto goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %s AND user_id = %d AND good_id = %d AND spec = '%s'", _order_id.c_str(), _user_id, good_id, _spec.c_str());
+    auto goods = sqlite_orm::search_record_all<dg_db_goods>(DG_DB_FILE, "order_id = %s AND user_id = %d AND good_id = %d AND spec = '%s' AND status = 'booking'", _order_id.c_str(), _user_id, good_id, _spec.c_str());
     for (auto &itr:goods) {
         if (false == f(itr))
         {

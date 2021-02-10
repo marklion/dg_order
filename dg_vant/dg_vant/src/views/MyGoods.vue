@@ -49,14 +49,14 @@
             <template #price>
                 <div>
                     <span v-if="good.price != 0">¥{{good.price}}</span>
-                    <van-button round type="primary" size="mini" v-if="good.pending == 'pending'" @click="confirm_price(good)">确认价格</van-button>
+                    <van-button round type="primary" size="mini" v-if="good.pending == 'pending' && good.price != 0" @click="confirm_price(good)">确认价格</van-button>
                 </div>
             </template>
 
         </van-card>
         <template #right>
-            <van-button square text="修改" type="primary" style="height: 100%" @click="show_modify_diag(good)" />
-            <van-button square text="删除" type="danger" style="height: 100%" @click="delete_good(good)" />
+            <van-button square text="修改" type="primary" style="height: 100%" :disabled="disable_to_modify(good)" @click="show_modify_diag(good)" />
+            <van-button square text="删除" type="danger" style="height: 100%" :disabled="disable_to_modify(good)" @click="delete_good(good)" />
         </template>
     </van-swipe-cell>
 
@@ -90,6 +90,14 @@ export default {
     name: 'MyGoods',
     data: function () {
         return {
+            disable_to_modify:function(_good) {
+                var ret = true;
+                if (_good.status == 'booking') {
+                    ret = false;
+                }
+
+                return ret;
+            },
             address_show: function (_address) {
                 var ret = '点击选择收货地址';
                 if (_address != '') {
