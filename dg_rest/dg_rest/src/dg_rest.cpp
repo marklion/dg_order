@@ -596,3 +596,30 @@ bool dg_rest::proc_confirm_pending(const std::string& ssid, const std::string& o
 
     return ret;
 }
+
+bool dg_rest::proc_giveup_good(const std::string& ssid, int id, const std::string& comment)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    auto order = dg_get_order_good(id);
+    if (order)
+    {
+        auto order_brief = dg_get_order(std::to_string(order->m_order_id));
+        if (opt_user && order_brief && order_brief->m_owner_user_id == opt_user->get_pri_id())
+        {
+            order->remove_record();
+            auto to_user = get_user_info(order->m_user_id);
+            auto good_info = dg_get_good_info(order->m_good_id);
+            if (to_user && good_info)
+            {
+                std::string my_comment;
+                Base64::Decode(comment, &my_comment);
+                send_out_sub_msg(order_brief->get_pri_id(), to_user->m_openid, good_info->m_name + "(" + order->m_spec + ")", "delete", my_comment);
+                ret = true;
+            }
+        }
+    }
+
+    return ret;
+}

@@ -249,6 +249,10 @@ public:
     // *location: /update_price
     // *method: POST
     bool proc_update_price(const std::string& ssid, int id, const std::string& price);
+
+    // *location: /giveup_good
+    // *method: POST
+    bool proc_giveup_good(const std::string& ssid, int id, const std::string& comment);
 };
 
 

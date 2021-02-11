@@ -12,6 +12,7 @@
         <van-tab title="按商品分类">
             <van-row>
                 <van-col class="vb_show">
+                    <div>共{{calc_count(cur_filter)}}件</div>
                     <van-sidebar v-model="good_name">
                         <van-sidebar-item v-for="name in filter_good_name()" :key="name" :title="name" :badge="get_count_by_name(name)" />
                     </van-sidebar>
@@ -27,6 +28,7 @@
                                 <van-col :span="9">
                                     <div>{{good.user_name}}</div>
                                     <div class="spec_show">{{good.spec}}</div>
+                                    <van-button size="mini" round type="danger" @click="remove_good(good.id, '无现货')">删除</van-button>
                                 </van-col>
                                 <van-col :span="12">
                                     <change-status :price="good.price" :pending="good.pending" @set_price="handle_price_set" :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
@@ -41,6 +43,7 @@
         <van-tab title="按订购人分类">
             <van-row>
                 <van-col class="vb_show">
+                    <div>共{{calc_count(cur_filter)}}件</div>
                     <van-sidebar v-model="good_buyer">
                         <van-sidebar-item v-for="buyer_logo in filter_buyer()" :key="buyer_logo" :title="get_user_name_by_logo(buyer_logo)" :badge="get_count_by_logo(buyer_logo)" />
                     </van-sidebar>
@@ -59,6 +62,9 @@
                                 <div class="status_show"></div>
                                 <change-status :price="good.price" :pending="good.pending" @set_price="handle_price_set" :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
                             </template>
+                            <template #price>
+                                <van-button size="mini" round type="danger" @click="remove_good(good.id, '无现货')">删除</van-button>
+                            </template>
                         </van-card>
                     </div>
                 </van-col>
@@ -74,6 +80,7 @@ import {
     Base64
 } from 'js-base64'
 import ChangeStatus from '../components/ChangeStatus.vue';
+import { Dialog } from 'vant';
 export default {
     name: 'List',
     components: {
@@ -99,6 +106,16 @@ export default {
                     value: 'delivered'
                 },
             ],
+            calc_count: function (_status) {
+                var ret = 0;
+                this.all_goods.forEach(element => {
+                    if (element.status == _status || _status == 'all') {
+                        ret += 1;
+                    }
+                });
+
+                return ret;
+            },
             good_buyer: 0,
             sort_by: 0,
             good_name: 0,
@@ -222,6 +239,32 @@ export default {
         };
     },
     methods: {
+        remove_good: function (_id, _comments) {
+            var vue_this = this;
+            Dialog.confirm({
+                    title: '确定要删除吗',
+                    message: '删除后会向顾客发送一条通知，并且删除不可恢复',
+                })
+                .then(() => {
+                    Base64.extendString();
+                    vue_this.$axios.post(vue_this.$remote_rest_url_header + 'giveup_good', {
+                        ssid: vue_this.$cookies.get('ssid'),
+                        id: _id,
+                        comment: _comments.toBase64(),
+                    }).then(function (resp) {
+                        console.log(resp);
+                        if (resp.data.result == true) {
+                            vue_this.get_all_goods();
+                        }
+                    }).catch(function (err) {
+                        console.log(err);
+                    });
+                })
+                .catch(() => {
+
+                });
+
+        },
         handle_price_set: function (_ps) {
             console.log(_ps);
             var vue_this = this;
@@ -239,7 +282,7 @@ export default {
             this.$axios.post(this.$remote_rest_url_header + 'update_price', {
                 ssid: this.$cookies.get('ssid'),
                 id: _ps.id,
-                price:_ps.price,
+                price: _ps.price,
             }).then(function (resp) {
                 if (resp.data.result == true) {
                     vue_this.get_all_goods();

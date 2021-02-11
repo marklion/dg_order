@@ -553,13 +553,16 @@ void send_out_sub_msg(int _my_good_id, const std::string &_touser,  const std::s
     data_value.Add("value", "");
 
     auto order_brief = dg_get_order(std::to_string(_my_good_id));
-    auto dg_owner = get_user_info(order_brief->m_owner_user_id);
-    if (order_brief && dg_owner)
+    if (order_brief)
     {
-        std::string order_description = dg_owner->m_name + "--" + order_brief->m_destination + "代购";
-        std::string title = "您好，您在 " + order_description + " 中的 " + _name + " 状态已更新";
-        data_value.Replace("value", title);
-        msg_data.Add("first", data_value);
+        auto dg_owner = get_user_info(order_brief->m_owner_user_id);
+        if (dg_owner)
+        {
+            std::string order_description = dg_owner->m_name + "--" + order_brief->m_destination + "代购";
+            std::string title = "您好，您在 " + order_description + " 中的 " + _name + " 状态已更新";
+            data_value.Replace("value", title);
+            msg_data.Add("first", data_value);
+        }
     }
     else
     {
@@ -571,6 +574,7 @@ void send_out_sub_msg(int _my_good_id, const std::string &_touser,  const std::s
     status_ch_map["booking"] = "预定中";
     status_ch_map["bought"] = "已购买";
     status_ch_map["delivered"] = "已发货";
+    status_ch_map["delete"] = "已删除";
 
     data_value.Replace("value", status_ch_map[_status]);
     msg_data.Add("keyword1", data_value);
