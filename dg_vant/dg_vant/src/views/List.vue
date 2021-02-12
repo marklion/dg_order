@@ -7,6 +7,7 @@
     </van-nav-bar>
     <van-dropdown-menu>
         <van-dropdown-item v-model="cur_filter" :options="filter_options" />
+        <van-dropdown-item v-model="choose_tag" :options="all_tags()" />
     </van-dropdown-menu>
     <van-tabs v-model="sort_by">
         <van-tab title="按商品分类">
@@ -21,14 +22,25 @@
                     <div class="content_show">
                         <van-image :src="get_picture_by_name(filter_good_name()[good_name])" v-if="get_picture_by_name(filter_good_name()[good_name]) != ''"></van-image>
                         <div v-for="(good, index) in get_goods_by_name(filter_good_name()[good_name])" :key="index">
-                            <van-row :gutter="5" type="flex" align="center">
+                            <van-row :gutter="1" type="flex" align="center">
                                 <van-col :span="3">
                                     <van-image :src="good.user_logo" width="33" height="33" round></van-image>
                                 </van-col>
                                 <van-col :span="9">
                                     <div>{{good.user_name}}</div>
                                     <div class="spec_show">{{good.spec}}</div>
-                                    <van-button size="mini" round type="danger" @click="remove_good(good.id, '无现货')">删除</van-button>
+
+                                    <van-row :gutter="5" type="flex" align="center">
+                                        <van-col :span="8">
+                                            <van-button size="mini" round type="danger" @click="remove_good(good.id, '无现货')">删除</van-button>
+                                        </van-col>
+                                        <van-col :span="16">
+                                            <van-tag round v-if="good.mng_tag != ''" closeable size="small" type="success" @close="close_tag_delete(good.id)" @click="open_tag_change_diag(good.id)">
+                                                {{tag_change_buton_show(good)}}
+                                            </van-tag>
+                                            <van-button v-else size="mini" type="info" round @click="open_tag_change_diag(good.id)">{{tag_change_buton_show(good)}}</van-button>
+                                        </van-col>
+                                    </van-row>
                                 </van-col>
                                 <van-col :span="12">
                                     <change-status :price="good.price" :pending="good.pending" @set_price="handle_price_set" :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
@@ -63,7 +75,15 @@
                                 <change-status :price="good.price" :pending="good.pending" @set_price="handle_price_set" :express="good.express" :address="good.address" :cur_status="good.status" :good_order_id="good.id" @status_change="handle_change"></change-status>
                             </template>
                             <template #price>
-                                <van-button size="mini" round type="danger" @click="remove_good(good.id, '无现货')">删除</van-button>
+                                <van-row :gutter="5" type="flex" align="center">
+                                    <van-button size="mini" round type="danger" @click="remove_good(good.id, '无现货')">删除</van-button>
+                                </van-row>
+                                <van-row>
+                                    <van-tag round v-if="good.mng_tag != ''" closeable size="medium" type="success" @close="close_tag_delete(good.id)" @click="open_tag_change_diag(good.id)">
+                                        {{tag_change_buton_show(good)}}
+                                    </van-tag>
+                                    <van-button v-else size="mini" type="info" round @click="open_tag_change_diag(good.id)">{{tag_change_buton_show(good)}}</van-button>
+                                </van-row>
                             </template>
                         </van-card>
                     </div>
@@ -72,6 +92,13 @@
 
         </van-tab>
     </van-tabs>
+    <van-popup v-model="show_mng_tag_edit" round position="bottom">
+        <van-picker show-toolbar :columns="all_tags_options()" @cancel="show_mng_tag_edit = false" @confirm="change_tag">
+            <template #title>
+                <van-field v-model="cur_user_tag" label="自定义标签" placeholder="请输入标签" />
+            </template>
+        </van-picker>
+    </van-popup>
 </div>
 </template>
 
@@ -80,7 +107,9 @@ import {
     Base64
 } from 'js-base64'
 import ChangeStatus from '../components/ChangeStatus.vue';
-import { Dialog } from 'vant';
+import {
+    Dialog
+} from 'vant';
 export default {
     name: 'List',
     components: {
@@ -88,6 +117,43 @@ export default {
     },
     data: function () {
         return {
+            show_mng_tag_edit: false,
+            id_of_change_tag: 0,
+            cur_user_tag: '',
+            choose_tag: 'all',
+            all_tags: function () {
+                var ret = [];
+
+                this.all_tags_options().forEach(element => {
+                    if (element != '') {
+                        ret.push({
+                            text: element,
+                            value: element
+                        });
+                    }
+                });
+                ret.push({
+                    text: '无标签',
+                    value: 'no_tag'
+                });
+                ret.push({
+                    text: "所有标签",
+                    value: "all"
+                });
+
+                return ret;
+            },
+            all_tags_options: function () {
+                var ret = [];
+                this.all_goods.forEach(element => {
+                    if (element.mng_tag != '') {
+                        if (ret.indexOf(element.mng_tag) == -1) {
+                            ret.push(element.mng_tag);
+                        }
+                    }
+                });
+                return ret;
+            },
             cur_filter: 'all',
             filter_options: [{
                     text: '全部',
@@ -138,7 +204,7 @@ export default {
                 var vue_this = this;
 
                 this.all_goods.forEach(element => {
-                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && ret.indexOf(element.user_logo) == -1) {
+                    if (vue_this.mng_tag_in_filter(element.mng_tag, vue_this.choose_tag) && vue_this.status_in_filter(element.status, vue_this.cur_filter) && ret.indexOf(element.user_logo) == -1) {
                         ret.push(element.user_logo);
                     }
                 });
@@ -148,10 +214,26 @@ export default {
             },
             status_in_filter: function (_status, _cur_filter) {
                 var ret = false;
-                if ('all' == this.cur_filter) {
+                if ('all' == _cur_filter) {
                     ret = true;
                 } else {
                     if (_status == _cur_filter) {
+                        ret = true;
+                    }
+                }
+
+                return ret;
+            },
+            mng_tag_in_filter: function (_tag, _cur_filter) {
+                var ret = false;
+                if ('all' == _cur_filter) {
+                    ret = true;
+                } else if ('no_tag' == _cur_filter) {
+                    if (_tag == '') {
+                        ret = true;
+                    }
+                } else {
+                    if (_tag == _cur_filter) {
                         ret = true;
                     }
                 }
@@ -162,7 +244,7 @@ export default {
                 var ret = [];
                 var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && ret.indexOf(element.name) == -1) {
+                    if (vue_this.mng_tag_in_filter(element.mng_tag, vue_this.choose_tag) && vue_this.status_in_filter(element.status, vue_this.cur_filter) && ret.indexOf(element.name) == -1) {
                         ret.push(element.name);
                     }
                 });
@@ -173,7 +255,7 @@ export default {
                 var ret = 0;
                 var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && element.user_logo == _logo) {
+                    if (vue_this.mng_tag_in_filter(element.mng_tag, vue_this.choose_tag) && vue_this.status_in_filter(element.status, vue_this.cur_filter) && element.user_logo == _logo) {
                         ret = ret + 1;
                     }
                 });
@@ -184,7 +266,7 @@ export default {
                 var ret = 0;
                 var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (element.name == _name && vue_this.status_in_filter(element.status, vue_this.cur_filter)) {
+                    if (vue_this.mng_tag_in_filter(element.mng_tag, vue_this.choose_tag) && element.name == _name && vue_this.status_in_filter(element.status, vue_this.cur_filter)) {
                         ret = ret + 1;
                     }
                 });
@@ -217,7 +299,7 @@ export default {
                 var ret = [];
                 var vue_this = this;
                 this.all_goods.forEach(element => {
-                    if (vue_this.status_in_filter(element.status, vue_this.cur_filter) && element.user_logo == _logo) {
+                    if (vue_this.mng_tag_in_filter(element.mng_tag, vue_this.choose_tag) && vue_this.status_in_filter(element.status, vue_this.cur_filter) && element.user_logo == _logo) {
                         ret.push(element);
                     }
                 });
@@ -229,16 +311,65 @@ export default {
                 var vue_this = this;
 
                 this.all_goods.forEach(element => {
-                    if (_name == element.name && vue_this.status_in_filter(element.status, vue_this.cur_filter)) {
+                    if (vue_this.mng_tag_in_filter(element.mng_tag, vue_this.choose_tag) && _name == element.name && vue_this.status_in_filter(element.status, vue_this.cur_filter)) {
                         ret.push(element)
                     }
                 });
 
                 return ret;
             },
+            tag_change_buton_show: function (_good) {
+                var ret = '自定义标签';
+                if (_good.mng_tag && _good.mng_tag != '') {
+                    ret = _good.mng_tag;
+                }
+
+                return ret;
+            },
         };
     },
     methods: {
+        open_tag_change_diag: function (_id) {
+            this.id_of_change_tag = _id;
+            this.cur_user_tag = '';
+            this.show_mng_tag_edit = true;
+        },
+        close_tag_delete: function (_id) {
+            var vue_this = this;
+            Base64.extendString();
+            vue_this.$axios.post(vue_this.$remote_rest_url_header + 'update_mng_tag', {
+                ssid: vue_this.$cookies.get('ssid'),
+                id: _id,
+                mng_tag: ''.toBase64(),
+            }).then(function (resp) {
+                console.log(resp);
+                if (resp.data.result == true) {
+                    vue_this.show_mng_tag_edit = false;
+                    vue_this.get_all_goods();
+                }
+            }).catch(function (err) {
+                console.log(err);
+            });
+        },
+        change_tag: function (_value) {
+            var vue_this = this;
+            if (vue_this.cur_user_tag == '') {
+                vue_this.cur_user_tag = _value;
+            }
+            vue_this.$axios.post(vue_this.$remote_rest_url_header + 'update_mng_tag', {
+                ssid: vue_this.$cookies.get('ssid'),
+                id: vue_this.id_of_change_tag,
+                mng_tag: vue_this.cur_user_tag.toBase64(),
+            }).then(function (resp) {
+                console.log(resp);
+                if (resp.data.result == true) {
+                    vue_this.show_mng_tag_edit = false;
+                    vue_this.get_all_goods();
+                }
+            }).catch(function (err) {
+                console.log(err);
+            });
+        },
         remove_good: function (_id, _comments) {
             var vue_this = this;
             Dialog.confirm({
@@ -326,6 +457,7 @@ export default {
                         express: element.express,
                         price: element.price,
                         pending: element.pending,
+                        mng_tag: element.mng_tag.fromBase64(),
                     });
                 });
                 console.log(vue_this.all_goods);

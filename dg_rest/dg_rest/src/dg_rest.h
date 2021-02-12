@@ -130,6 +130,7 @@ struct dg_all_goods_order {
     std::string express;
     std::string price;
     std::string pending;
+    std::string mng_tag;
 };
 
 
@@ -253,6 +254,10 @@ public:
     // *location: /giveup_good
     // *method: POST
     bool proc_giveup_good(const std::string& ssid, int id, const std::string& comment);
+
+    // *location: /update_mng_tag
+    // *method: POST
+    bool proc_update_mng_tag(const std::string& ssid, int id, const std::string& mng_tag);
 };
 
 

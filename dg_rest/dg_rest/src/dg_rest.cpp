@@ -410,6 +410,8 @@ std::vector<dg_all_goods_order> dg_rest::proc_all_goods(const std::string& order
             order.express = single_good.m_express;
             order.price = single_good.m_price;
             order.pending = single_good.m_pending;
+
+            Base64::Encode(single_good.m_mng_tag, &(order.mng_tag));
             ret.push_back(order);
         }
     }
@@ -618,6 +620,25 @@ bool dg_rest::proc_giveup_good(const std::string& ssid, int id, const std::strin
                 send_out_sub_msg(order_brief->get_pri_id(), to_user->m_openid, good_info->m_name + "(" + order->m_spec + ")", "delete", my_comment);
                 ret = true;
             }
+        }
+    }
+
+    return ret;
+}
+
+bool dg_rest::proc_update_mng_tag(const std::string& ssid, int id, const std::string& mng_tag)
+{
+    bool ret = false;
+
+    auto opt_user = get_online_user_info(ssid);
+    auto order = dg_get_order_good(id);
+    if (order)
+    {
+        auto order_brief = dg_get_order(std::to_string(order->m_order_id));
+        if (opt_user && order_brief && order_brief->m_owner_user_id == opt_user->get_pri_id())
+        {
+            Base64::Decode(mng_tag, &(order->m_mng_tag));
+            ret = order->update_record();
         }
     }
 
