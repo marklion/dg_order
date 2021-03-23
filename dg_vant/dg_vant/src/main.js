@@ -8,7 +8,7 @@ import 'vant/lib/index.less';
 import cookies from 'vue-cookies'
 
 Vue.prototype.$cookies = cookies;
-Vue.prototype.$remote_url = 'http://www.d8sis.cn';
+Vue.prototype.$remote_url = 'https://www.d8sis.cn';
 Vue.prototype.$remote_rest_url_header = Vue.prototype.$remote_url + '/dg_rest/';
 
 Vue.config.productionTip = false
